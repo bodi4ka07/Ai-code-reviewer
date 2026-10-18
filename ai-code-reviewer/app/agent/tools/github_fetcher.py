@@ -69,20 +69,19 @@ async def fetch_github_file(url: str, client: httpx.AsyncClient | None = None) -
     """Завантажує вміст файлу з GitHub. Кидає ValueError з повідомленням для користувача."""
     gh = parse_github_url(url)
 
-    headers = {}
-    if settings.GITHUB_TOKEN and settings.GITHUB_TOKEN != "your-github-token-here":
-        headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
-
     max_bytes = settings.MAX_CODE_CHARS * 4
     own_client = client is None
     client = client or httpx.AsyncClient(timeout=15.0, follow_redirects=False)
 
     try:
-        async with client.stream("GET", gh.raw_url, headers=headers) as response:
-            if response.status_code == 404:
-                raise ValueError(f"Файл не знайдено: {url}")
-            if response.status_code in (401, 403):
-                raise ValueError("Доступ заборонено. Для приватних репозиторіїв потрібен GITHUB_TOKEN.")
+        async with client.stream("GET", gh.raw_url) as response:
+            # Токен GitHub навмисно не використовується: через спільний токен сервера
+            # будь-який користувач міг би читати чужі приватні файли.
+            if response.status_code in (401, 403, 404):
+                raise ValueError(
+                    "Файл не знайдено або репозиторій приватний. "
+                    "Підтримуються лише публічні файли, для приватних вставте код вручну."
+                )
             if response.status_code != 200:
                 raise ValueError(f"Помилка завантаження з GitHub: HTTP {response.status_code}")
 

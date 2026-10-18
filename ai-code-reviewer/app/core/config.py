@@ -23,9 +23,6 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "gemini-embedding-001"
     EMBEDDING_DIM: int = 768
 
-    # GitHub
-    GITHUB_TOKEN: Optional[str] = None
-
     # Обмеження та безпека
     MAX_CODE_CHARS: int = 20000
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
@@ -41,6 +38,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"  # невідомі змінні в .env (наприклад, застарілий GITHUB_TOKEN) не ламають запуск
 
 
 settings = Settings()

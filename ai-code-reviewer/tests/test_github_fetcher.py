@@ -57,7 +57,20 @@ async def test_fetch_requests_only_raw_host():
     assert seen == ["https://raw.githubusercontent.com/o/r/main/a.py"]
 
 
-@pytest.mark.parametrize("status, fragment", [(404, "не знайдено"), (403, "GITHUB_TOKEN"), (500, "HTTP 500")])
+async def test_fetch_never_sends_authorization(monkeypatch):
+    """Спільний токен сервера не має потрапляти в запити: інакше користувачі читали б чужі приватні файли."""
+    monkeypatch.setenv("GITHUB_TOKEN", "ghp_should_never_be_sent")
+    headers = {}
+
+    def handler(request: httpx.Request):
+        headers.update(request.headers)
+        return httpx.Response(200, text="x = 1")
+
+    await fetch_github_file("https://github.com/o/r/blob/main/a.py", client=_client(handler))
+    assert "authorization" not in headers
+
+
+@pytest.mark.parametrize("status, fragment", [(404, "приватний"), (403, "приватний"), (500, "HTTP 500")])
 async def test_fetch_error_statuses(status, fragment):
     client = _client(lambda request: httpx.Response(status))
     with pytest.raises(ValueError, match=fragment):

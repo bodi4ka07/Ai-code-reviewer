@@ -1,7 +1,7 @@
 # AI Code Reviewer
 
 REST API для автоматичного рев'ю коду за допомогою AI-агента.
-Підтримувані мови: **Python, JavaScript, TypeScript, Java** (повний аналіз зі статичним лінтером).
+Підтримувані мови: **Python, JavaScript, TypeScript** (повний аналіз зі статичним лінтером).
 Інші мови приймаються в режимі `other`: лише AI-аналіз, без лінтера.
 
 ## Технології
@@ -38,6 +38,8 @@ pytest          # AI та GitHub підміняються заглушками, 
 3. Результат валідується й зберігається; статус `done` або `failed` (з повідомленням про причину).
 4. Клієнт опитує `GET /reviews/{id}`.
 
+Посилання на GitHub підтримуються лише для публічних файлів; для приватних вставте код вручну.
+
 Мова рев'ю: явно вказана > визначена за розширенням файлу з GitHub > мова проєкту.
 
 ## API
@@ -66,7 +68,7 @@ app/
 ├── services/       # Бізнес-логіка
 ├── agent/          # AI-агент
 │   ├── tools/      # linter, github_fetcher, rag_search
-│   └── rules/      # Правила Semgrep (python, javascript, java)
+│   └── rules/      # Правила Semgrep (python, javascript)
 └── tasks.py        # Celery-задачі
 alembic/versions/   # Міграції
 scripts/seed_docs.py # Наповнення RAG
