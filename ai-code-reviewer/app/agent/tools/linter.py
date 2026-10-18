@@ -13,7 +13,11 @@ from app.core.languages import get_language
 RULES_DIR = Path(__file__).resolve().parent.parent / "rules"
 TIMEOUT_SECONDS = 30
 
-_PYFLAKES_RE = re.compile(r"^code\.py:(\d+):(?:(\d+):?)?\s*(.*)$")
+# Ім'я файлу не має збігатися з модулями стандартної бібліотеки (наприклад, code.py):
+# інакше інтерпретатор може імпортувати код користувача замість модуля і виконати його.
+SOURCE_STEM = "review_target"
+
+_PYFLAKES_RE = re.compile(r"^[^:]+:(\d+):(?:(\d+):?)?\s*(.*)$")
 _SEMGREP_SEVERITY = {"ERROR": "critical", "WARNING": "warning", "INFO": "info"}
 
 
@@ -89,12 +93,13 @@ async def run_linter(code: str, language: str) -> LintResult:
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
-        source = tmp_dir / f"code{lang.extensions[0]}"
+        source = tmp_dir / f"{SOURCE_STEM}{lang.extensions[0]}"
         source.write_text(code, encoding="utf-8")
 
         if lang.use_pyflakes:
             try:
-                _, out, err = await _run([sys.executable, "-m", "pyflakes", source.name], tmp_dir)
+                # -I: ізольований режим, поточна папка не потрапляє в sys.path
+                _, out, err = await _run([sys.executable, "-I", "-m", "pyflakes", source.name], tmp_dir)
                 result.errors += parse_pyflakes(out + "\n" + err)
             except asyncio.TimeoutError:
                 result.notes.append("pyflakes перевищив ліміт часу.")

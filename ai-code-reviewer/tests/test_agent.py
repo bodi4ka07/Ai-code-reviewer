@@ -71,9 +71,9 @@ async def test_analyze_parses_and_sanitizes(lint):
 
 async def test_prompt_is_language_aware_and_contains_lint(lint):
     client = FakeClient(GOOD)
-    await CodeReviewAgent(client).analyze(CODE, None, "java")
+    await CodeReviewAgent(client).analyze(CODE, None, "javascript")
     prompt = client.prompts[0]
-    assert "Java" in prompt and "Google Java Style Guide" in prompt
+    assert "JavaScript" in prompt and "Google JavaScript Style Guide" in prompt
     assert "PEP" not in prompt
     assert "'os' imported but unused" in prompt
     assert "<code_to_review>" in prompt

@@ -36,13 +36,6 @@ CHUNKS = [
     ("Google TypeScript Style Guide", "typescript", "Avoid the any type. Prefer unknown or a specific type so the compiler can check usage; any disables type checking."),
     ("Google TypeScript Style Guide", "typescript", "Do not use the non-null assertion operator (!) to silence the compiler without justification; handle null and undefined explicitly."),
     ("Google TypeScript Style Guide", "typescript", "Use const and let, never var. Use === and !==. Prefer interfaces for object shapes and avoid enums with mixed values."),
-    # --- Java ---
-    ("Google Java Style Guide", "java", "Braces are required with if, else, for, do and while statements, even when the body is empty or contains only a single statement."),
-    ("Google Java Style Guide", "java", "Caught exceptions are not ignored. It is very rarely correct to do nothing in response to a caught exception; log it or handle it, and if ignoring is truly appropriate explain why in a comment."),
-    ("Google Java Style Guide", "java", "Naming: UpperCamelCase for classes, lowerCamelCase for methods and variables, UPPER_SNAKE_CASE for constants. Package names are all lowercase."),
-    ("Effective Java", "java", "Item 9: Prefer try-with-resources to try-finally. It closes resources automatically and does not lose the original exception."),
-    ("OWASP SQL Injection Prevention Cheat Sheet", "java", "Use PreparedStatement with bound parameters. Never concatenate user input into SQL strings passed to Statement.executeQuery."),
-    ("Google Java Style Guide", "java", "Always use the @Override annotation when it is legal. Do not call printStackTrace; use a logging framework."),
     # --- OWASP Top 10 (для всіх мов) ---
     ("OWASP Top 10", None, "A01:2021 Broken Access Control: Users cannot act outside of their intended permissions. Implement access control mechanisms once and re-use them throughout the application."),
     ("OWASP Top 10", None, "A02:2021 Cryptographic Failures: Do not use MD5 or SHA1 for passwords. Use bcrypt, scrypt, or Argon2. Encrypt sensitive data in transit and at rest."),
@@ -51,7 +44,7 @@ CHUNKS = [
     ("OWASP Top 10", None, "A05:2021 Security Misconfiguration: Default accounts and passwords still enabled. Error handling reveals stack traces to users. Unnecessary features enabled."),
     ("OWASP Top 10", None, "A06:2021 Vulnerable and Outdated Components: Continuously inventory versions of all components. Monitor CVE and NVD for vulnerabilities in the components you use."),
     ("OWASP Top 10", None, "A07:2021 Identification and Authentication Failures: Implement multi-factor authentication. Never store passwords in plain text or hard-code credentials. Protect against brute force attacks with rate limiting."),
-    ("OWASP Top 10", None, "A08:2021 Software and Data Integrity Failures: Verify integrity of software and data. Do not deserialize untrusted data (for example pickle, Java serialization) and do not rely on plugins from untrusted sources."),
+    ("OWASP Top 10", None, "A08:2021 Software and Data Integrity Failures: Verify integrity of software and data. Do not deserialize untrusted data (for example pickle) and do not rely on plugins from untrusted sources."),
     ("OWASP Top 10", None, "A09:2021 Security Logging and Monitoring Failures: Log all login, access control, and input validation failures with sufficient context to identify suspicious accounts."),
     ("OWASP Top 10", None, "A10:2021 Server-Side Request Forgery: Validate and sanitize all client-supplied URLs. Enforce URL schema, port, and destination with a positive allow list to prevent SSRF attacks."),
 ]

@@ -64,24 +64,29 @@ async def test_linter_never_executes_code(monkeypatch, tmp_path):
     assert not marker.exists()
 
 
+def test_source_filename_cannot_shadow_stdlib():
+    import sys
+
+    assert linter.SOURCE_STEM not in sys.stdlib_module_names
+
+
 def test_format_lint_results():
     assert "не знайшов" in format_lint_results(LintResult())
     text = format_lint_results(LintResult(errors=[linter.LintError(3, "msg", "semgrep", "critical", reference="OWASP")]))
     assert "Рядок 3" in text and "[OWASP]" in text
 
 
-@pytest.mark.skipif(shutil.which("semgrep") is None, reason="semgrep не встановлено (працює в Docker)")
+@pytest.mark.skipif(shutil.which(linter.settings.SEMGREP_BIN) is None, reason="semgrep не встановлено (працює в Docker)")
 @pytest.mark.parametrize(
     "language, code, rule_hint",
     [
-        ("python", 'def f(c, n):\n    c.execute("SELECT * FROM u WHERE n=\'" + n + "\'")\n    return eval(n)\n', "ін'єкц"),
+        ("python", 'def f(c, n):\n    c.execute("SELECT * FROM u WHERE n=\'" + n + "\'")\n    return eval(n)\n', "SQL-запит"),
         ("javascript", "const r = eval(userInput);\n", "eval"),
-        ("java", 'class A { void f(java.sql.Statement s, String n) throws Exception { s.executeQuery("SELECT " + n); } }\n', "SQL"),
     ],
 )
 async def test_semgrep_rules_detect_known_issues(language, code, rule_hint):
     result = await run_linter(code, language)
-    assert any(e.tool == "semgrep" for e in result.errors), result.notes
+    assert any(e.tool == "semgrep" and rule_hint in e.message for e in result.errors), (result.errors, result.notes)
 
 
 def test_language_helpers():
@@ -90,5 +95,4 @@ def test_language_helpers():
     with pytest.raises(ValueError):
         normalize_language("brainfuck")
     assert detect_language("src/App.tsx") == "typescript"
-    assert detect_language("Main.java") == "java"
     assert detect_language("notes.txt") is None

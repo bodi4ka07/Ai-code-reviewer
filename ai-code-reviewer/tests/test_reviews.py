@@ -18,9 +18,9 @@ async def test_create_review_with_code(client, auth, project_id, queued):
 
 async def test_review_language_override_and_detection(client, auth, project_id):
     explicit = await client.post(
-        "/reviews/", json={"project_id": project_id, "code_snippet": CODE, "language": "java"}, headers=auth
+        "/reviews/", json={"project_id": project_id, "code_snippet": CODE, "language": "javascript"}, headers=auth
     )
-    assert explicit.json()["language"] == "java"
+    assert explicit.json()["language"] == "javascript"
 
     detected = await client.post(
         "/reviews/",

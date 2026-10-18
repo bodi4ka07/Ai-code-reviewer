@@ -42,13 +42,6 @@ LANGUAGES: dict[str, Language] = {
         style_guide="Google TypeScript Style Guide",
         rules_file="javascript.yml",
     ),
-    "java": Language(
-        code="java",
-        name="Java",
-        extensions=(".java",),
-        style_guide="Google Java Style Guide",
-        rules_file="java.yml",
-    ),
 }
 
 _ALIASES = {"py": "python", "js": "javascript", "ts": "typescript"}
