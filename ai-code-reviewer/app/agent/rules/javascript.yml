@@ -1,0 +1,72 @@
+rules:
+  - id: js-eval
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: eval() та new Function() виконують довільний код.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Уникайте динамічного виконання коду, використовуйте JSON.parse або явну логіку"
+
+  - id: js-sql-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: SQL-запит будується конкатенацією або шаблонним рядком з даними користувача.
+    pattern-either:
+      - pattern: $DB.query("..." + $X)
+      - pattern: $DB.query(`...${$X}...`)
+      - pattern: $DB.execute("..." + $X)
+      - pattern: $DB.execute(`...${$X}...`)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використовуйте параметризовані запити ($1, ? тощо)"
+
+  - id: js-xss-innerhtml
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Запис у innerHTML або document.write без екранування веде до XSS.
+    pattern-either:
+      - pattern: $EL.innerHTML = $X
+      - pattern: document.write(...)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використовуйте textContent або санітизуйте HTML (наприклад, DOMPurify)"
+
+  - id: js-command-injection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: child_process.exec з динамічним рядком вразливий до ін'єкції команд.
+    pattern-either:
+      - pattern: $CP.exec("..." + $X)
+      - pattern: $CP.exec(`...${$X}...`)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використовуйте execFile з масивом аргументів"
+
+  - id: js-loose-equality
+    languages: [javascript, typescript]
+    severity: INFO
+    message: Нестроге порівняння (==, !=) призводить до неочевидних приведень типів.
+    pattern-either:
+      - pattern: $A == $B
+      - pattern: $A != $B
+    metadata:
+      category: style
+      reference: "Google JavaScript Style Guide - use === and !=="
+      fix: "Використовуйте === та !=="
+
+  - id: js-var-declaration
+    languages: [javascript, typescript]
+    severity: INFO
+    message: Оголошення через var має функціональну область видимості та підйом.
+    pattern: var $X = ...
+    metadata:
+      category: style
+      reference: "Google JavaScript Style Guide - use const or let"
+      fix: "Використовуйте const або let"

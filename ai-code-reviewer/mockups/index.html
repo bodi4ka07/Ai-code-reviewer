@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="uk" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Code Reviewer — макет</title>
+<style>
+  :root {
+    --bg: #0a0d14; --surface: #10141d; --surface2: #161b27; --border: #222a3a; --border2: #2d374b;
+    --text: #e8ecf4; --muted: #8b95ab; --faint: #5b6579;
+    --accent: #7c6cff; --accent2: #22d3ee; --grad: linear-gradient(135deg, #7c6cff 0%, #22d3ee 100%);
+    --ok: #34d399; --warn: #fbbf24; --crit: #ff5d73; --info: #60a5fa;
+    --bug: #ff6b81; --security: #c084fc; --style: #38bdf8; --performance: #fbbf24;
+    --code-bg: #0c1018; --code-fg: #cdd5e6;
+    --shadow: 0 10px 30px -12px rgba(0, 0, 0, .6);
+    --glow: rgba(124, 108, 255, .16);
+  }
+  [data-theme="light"] {
+    --bg: #f4f6fb; --surface: #ffffff; --surface2: #f0f2f8; --border: #e2e6f0; --border2: #d3d9e8;
+    --text: #151a28; --muted: #5d677e; --faint: #98a1b5;
+    --accent: #5b4bf0; --accent2: #0891b2; --grad: linear-gradient(135deg, #5b4bf0 0%, #0891b2 100%);
+    --ok: #059669; --warn: #d97706; --crit: #e11d48; --info: #2563eb;
+    --bug: #e11d48; --security: #9333ea; --style: #0284c7; --performance: #d97706;
+    --code-bg: #f7f8fc; --code-fg: #2a3148;
+    --shadow: 0 8px 24px -14px rgba(30, 40, 80, .25);
+    --glow: rgba(91, 75, 240, .08);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14.5px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(700px 360px at 85% -5%, var(--glow), transparent 70%), radial-gradient(500px 300px at 0% 100%, var(--glow), transparent 70%); }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  button { font: inherit; color: inherit; }
+  h1, h2, h3 { margin: 0; letter-spacing: -.01em; }
+  .muted { color: var(--muted); } .faint { color: var(--faint); }
+  .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+  /* ---------- shell ---------- */
+  .shell { position: relative; display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside { position: sticky; top: 0; height: 100vh; padding: 20px 14px; border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 80%, transparent); backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 6px; }
+  .logo { display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px; font-weight: 700; font-size: 16px; }
+  .logo .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--grad); display: grid; place-items: center; color: #fff; box-shadow: 0 6px 18px -4px var(--accent); }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 0; background: none; color: var(--muted); cursor: pointer; text-align: left; transition: .15s; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.on { background: var(--surface2); color: var(--text); box-shadow: inset 2px 0 var(--accent); }
+  .nav-item.on svg { color: var(--accent2); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+  .user { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--grad); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
+  .theme { display: flex; align-items: center; gap: 8px; justify-content: center; padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: none; cursor: pointer; color: var(--muted); }
+  .theme:hover { color: var(--text); border-color: var(--border2); }
+  main { padding: 28px clamp(16px, 3vw, 40px) 40px; max-width: 1180px; width: 100%; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .page-head h1 { font-size: 24px; }
+  .page-head p { margin: 4px 0 0; }
+  .crumb { color: var(--muted); font-size: 13px; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+  .screen { display: none; animation: fade .25s ease; } .screen.on { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- primitives ---------- */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: 0; cursor: pointer; font-weight: 600; background: var(--grad); color: #fff; box-shadow: 0 8px 20px -8px var(--accent); transition: .15s; }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+  .btn.ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); box-shadow: none; }
+  .btn.sm { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--c, var(--muted)) 15%, transparent); color: var(--c, var(--muted)); border: 1px solid color-mix(in srgb, var(--c, var(--muted)) 35%, transparent); }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .done { --c: var(--ok); } .processing { --c: var(--warn); } .pending { --c: var(--muted); } .failed { --c: var(--crit); }
+  .critical { --c: var(--crit); } .warning { --c: var(--warn); } .info { --c: var(--info); }
+  .bug { --c: var(--bug); } .security { --c: var(--security); } .style { --c: var(--style); } .performance { --c: var(--performance); }
+  label { display: block; font-size: 12.5px; color: var(--muted); margin: 14px 0 6px; font-weight: 500; }
+  .input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font: inherit; outline: none; transition: .15s; }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+  .grid { display: grid; gap: 16px; }
+  .g3 { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+
+  /* ---------- login ---------- */
+  .auth { display: none; min-height: 100vh; position: relative; }
+  body.auth-mode .auth { display: grid; grid-template-columns: 1.1fr 1fr; }
+  body.auth-mode .shell { display: none; }
+  .hero { padding: 48px clamp(24px, 5vw, 72px); display: flex; flex-direction: column; justify-content: center; gap: 22px; border-right: 1px solid var(--border); background: radial-gradient(600px 400px at 20% 20%, var(--glow), transparent 70%); }
+  .hero h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.1; }
+  .hero h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; color: var(--muted); }
+  .hero li { display: flex; gap: 10px; align-items: center; } .hero li svg { color: var(--ok); }
+  .mini-code { padding: 14px 16px; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--border); font-size: 12.5px; max-width: 460px; }
+  .auth-form { display: grid; place-items: center; padding: 24px; }
+  .auth-form .card { width: 100%; max-width: 400px; padding: 28px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface2); padding: 4px; border-radius: 10px; margin: 16px 0 4px; }
+  .seg button { border: 0; background: none; padding: 8px; border-radius: 7px; color: var(--muted); cursor: pointer; font-weight: 600; }
+  .seg button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  /* ---------- projects ---------- */
+  .proj { cursor: pointer; transition: .18s; position: relative; overflow: hidden; }
+  .proj:hover { transform: translateY(-3px); border-color: var(--border2); }
+  .proj .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .lang { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+  .lang i { width: 9px; height: 9px; border-radius: 50%; background: #3b82f6; }
+  .proj .big { font-size: 32px; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+  .proj .meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; }
+  .proj.add { border-style: dashed; display: grid; place-items: center; min-height: 170px; color: var(--muted); background: none; box-shadow: none; }
+  .proj.add:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- new review ---------- */
+  .new-wrap { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 1000px) { .new-wrap { grid-template-columns: 1.5fr 1fr; align-items: start; } }
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface2); border-radius: 10px; width: fit-content; margin-bottom: 14px; }
+  .tabs button { display: flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: 7px; border: 0; background: none; color: var(--muted); cursor: pointer; font-weight: 600; }
+  .tabs button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  textarea.input { min-height: 240px; resize: vertical; font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.6; background: var(--code-bg); }
+  .stepper { display: grid; gap: 0; margin-top: 8px; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; position: relative; padding-bottom: 20px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--border2); }
+  .step:last-child::before { display: none; }
+  .step .ic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface2); border: 1px solid var(--border2); color: var(--faint); transition: .3s; }
+  .step.active .ic { border-color: var(--warn); color: var(--warn); box-shadow: 0 0 0 4px color-mix(in srgb, var(--warn) 18%, transparent); animation: pulse 1.2s infinite; }
+  .step.complete .ic { background: var(--ok); border-color: var(--ok); color: #04130d; }
+  .step.complete::before { background: var(--ok); }
+  .step b { display: block; font-size: 14px; } .step span { color: var(--muted); font-size: 12.5px; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px transparent; } }
+
+  /* ---------- result ---------- */
+  .summary { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; margin-bottom: 16px; }
+  @media (max-width: 560px) { .summary { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .ring { position: relative; width: 120px; height: 120px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .num { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .ring .num small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .split { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 980px) { .split { grid-template-columns: 1.25fr 1fr; align-items: start; } .sticky { position: sticky; top: 16px; } }
+  .code-box { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: var(--code-bg); box-shadow: var(--shadow); }
+  .code-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); font-size: 12.5px; color: var(--muted); }
+  .dots { display: flex; gap: 6px; margin-right: 6px; } .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border2); }
+  pre.code { margin: 0; padding: 10px 0; overflow-x: auto; font: 13px/1.7 "JetBrains Mono", ui-monospace, Consolas, monospace; color: var(--code-fg); }
+  .ln { display: flex; padding-right: 16px; border-left: 3px solid transparent; transition: background .15s; }
+  .ln .n { flex: none; width: 46px; text-align: right; padding-right: 14px; color: var(--faint); user-select: none; }
+  .ln .t { white-space: pre; }
+  .ln.bad { background: color-mix(in srgb, var(--c) 10%, transparent); border-left-color: var(--c); }
+  .ln.bad .n { color: var(--c); font-weight: 700; }
+  .ln.active { background: color-mix(in srgb, var(--c) 24%, transparent); }
+  .tk-k { color: #c792ea; } .tk-s { color: #a5e075; } .tk-c { color: var(--faint); font-style: italic; } .tk-f { color: #7fb4ff; } .tk-b { color: #f0a36a; }
+  [data-theme="light"] .tk-k { color: #7c3aed; } [data-theme="light"] .tk-s { color: #15803d; } [data-theme="light"] .tk-f { color: #1d4ed8; } [data-theme="light"] .tk-b { color: #c2410c; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border2); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 500; transition: .15s; }
+  .chip:hover { color: var(--text); }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .chip em { font-style: normal; font-size: 11px; opacity: .7; }
+  .comment { padding: 0; overflow: hidden; margin-bottom: 12px; cursor: pointer; transition: .15s; border-left: 3px solid var(--c); }
+  .comment:hover, .comment.sel { border-color: var(--c); background: var(--surface2); }
+  .comment .in { padding: 14px 16px; }
+  .comment .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .comment .line { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .comment p { margin: 0; }
+  .diff { margin-top: 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); font: 12.5px/1.6 "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .diff div { padding: 2px 10px; white-space: pre-wrap; word-break: break-all; }
+  .diff .rm { background: color-mix(in srgb, var(--crit) 14%, transparent); color: var(--crit); }
+  .diff .add { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+  .ref { display: inline-flex; gap: 6px; align-items: center; margin-top: 12px; font-size: 12px; color: var(--accent2); }
+  .ask { display: flex; gap: 8px; margin-top: 12px; }
+  .ask .input { padding: 7px 10px; font-size: 13px; }
+
+  /* ---------- stats ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .kpi .v { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin-top: 4px; }
+  .kpi .d { font-size: 12.5px; display: inline-flex; gap: 4px; align-items: center; }
+  .up { color: var(--ok); } .down { color: var(--crit); }
+  .two { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 980px) { .two { grid-template-columns: 1.6fr 1fr; } }
+  .donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .donut { position: relative; width: 150px; height: 150px; } .donut svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .donut .c { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-weight: 800; font-size: 26px; line-height: 1; } .donut .c small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 4px; }
+  .legend { display: grid; gap: 8px; font-size: 13px; }
+  .legend div { display: flex; align-items: center; gap: 8px; } .legend i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+  .legend b { margin-left: auto; padding-left: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 10px; border-bottom: 1px solid var(--border); } tr:last-child td { border: 0; }
+  tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
+  .scroll-x { overflow-x: auto; }
+
+  /* ---------- mobile ---------- */
+  .tabbar { display: none; }
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    aside { display: none; }
+    main { padding: 18px 16px 96px; }
+    .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); border-top: 1px solid var(--border); }
+    .tabbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; border: 0; background: none; color: var(--faint); font-size: 11px; cursor: pointer; }
+    .tabbar button.on { color: var(--accent2); }
+    body.auth-mode .auth { grid-template-columns: 1fr; }
+    .hero { display: none; }
+    .page-head h1 { font-size: 21px; }
+  }
+</style>
+</head>
+<body class="auth-mode">
+
+<!-- ================= AUTH ================= -->
+<div class="auth">
+  <div class="hero">
+    <div class="logo" style="padding:0"><span class="mark"><svg class="i" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg></span> AI Code Reviewer</div>
+    <h1>Рев'ю коду <span>за секунди</span>, а не за дні</h1>
+    <ul>
+      <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg> Баги, безпека, стиль і продуктивність в одному звіті</li>
+      <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg> Кожна порада з посиланням на PEP 8 або OWASP</li>
+      <li><svg class="i" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg> Працює на ПК і телефоні з одного коду</li>
+    </ul>
+    <div class="mini-code mono"><span class="tk-k">def</span> <span class="tk-f">login</span>(user):<br>&nbsp;&nbsp;<span class="tk-k">return</span> <span class="tk-b">eval</span>(user.input) <span class="badge security" style="margin-left:6px">A03 Injection</span></div>
+  </div>
+  <div class="auth-form">
+    <div class="card">
+      <h2 id="authTitle">З поверненням</h2>
+      <p class="muted" style="margin:6px 0 0">Увійдіть, щоб продовжити</p>
+      <div class="seg"><button class="on" data-m="in">Вхід</button><button data-m="up">Реєстрація</button></div>
+      <label>Email</label><input class="input" type="email" placeholder="you@example.com">
+      <label>Пароль</label><input class="input" type="password" placeholder="Мінімум 8 символів">
+      <button class="btn" style="width:100%;margin-top:20px" onclick="enter()">Продовжити</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="shell">
+  <aside>
+    <div class="logo"><span class="mark"><svg class="i" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg></span> Code Reviewer</div>
+    <div id="sideNav"></div>
+    <div class="side-foot">
+      <button class="theme" onclick="toggleTheme()"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg> Тема</button>
+      <div class="user"><div class="avatar">ОП</div><div><div style="font-weight:600;font-size:13px">Олег П.</div><div class="faint" style="font-size:12px">oleg@example.com</div></div></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Проєкти -->
+    <section class="screen" id="projects">
+      <div class="page-head"><div><h1>Проєкти</h1><p class="muted">Оберіть проєкт, щоб побачити історію та статистику</p></div><button class="btn" onclick="go('new')"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Нове рев'ю</button></div>
+      <div class="grid g3" id="projGrid"></div>
+    </section>
+
+    <!-- Нове рев'ю -->
+    <section class="screen" id="new">
+      <div class="page-head"><div><div class="crumb">backend-api <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> Нове рев'ю</div><h1>Надіслати код на рев'ю</h1></div></div>
+      <div class="new-wrap">
+        <div class="card">
+          <div class="tabs" id="srcTabs">
+            <button class="on" data-t="paste"><svg class="i" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg> Вставити код</button>
+            <button data-t="url"><svg class="i" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg> Посилання на GitHub</button>
+          </div>
+          <div id="t-paste"><textarea class="input" id="src" spellcheck="false"></textarea><div class="muted" style="font-size:12.5px;margin-top:8px">Максимум 10 000 символів · мова: Python</div></div>
+          <div id="t-url" style="display:none">
+            <label style="margin-top:0">URL файлу</label>
+            <input class="input mono" placeholder="https://github.com/owner/repo/blob/main/app/main.py">
+            <div class="muted" style="font-size:12.5px;margin-top:8px">Підтримуються лише github.com та raw.githubusercontent.com</div>
+          </div>
+          <button class="btn" id="sendBtn" style="margin-top:16px" onclick="submitReview()"><svg class="i" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg> Надіслати</button>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:4px">Статус рев'ю</h3>
+          <p class="muted" style="margin:0 0 16px;font-size:13px">Оновлюється автоматично</p>
+          <div class="stepper" id="stepper"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Результат -->
+    <section class="screen" id="result">
+      <div class="page-head"><div><div class="crumb">backend-api <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> Рев'ю #42</div><h1>Результат рев'ю <span class="badge done" style="vertical-align:middle;margin-left:6px"><span class="dot"></span>готово</span></h1></div><button class="btn ghost" onclick="go('new')">Нове рев'ю</button></div>
+      <div class="card summary">
+        <div class="ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#ff5d73"/></linearGradient></defs><circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="10"/><circle id="ringArc" cx="60" cy="60" r="52" fill="none" stroke="url(#rg)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition:stroke-dashoffset 1s ease"/></svg><div class="num"><div>54<small>із 100</small></div></div></div>
+        <div>
+          <h3>Потрібні правки перед злиттям</h3>
+          <p class="muted" style="margin:6px 0 0">Знайдено критичну SQL-ін'єкцію та небезпечне використання <code class="mono">eval</code>. Обробка помилок потребує уваги, стиль загалом прийнятний.</p>
+          <div class="chips" id="sumChips"></div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="code-box sticky"><div class="code-head"><div class="dots"><i></i><i></i><i></i></div><span class="mono">app/services/users.py</span><span style="margin-left:auto">Python</span></div><pre class="code" id="code"></pre></div>
+        <div><div class="filters" id="filters"></div><div id="comments"></div></div>
+      </div>
+    </section>
+
+    <!-- Статистика -->
+    <section class="screen" id="stats">
+      <div class="page-head"><div><div class="crumb">Проєкти <svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> backend-api</div><h1>Статистика якості</h1></div><button class="btn" onclick="go('new')"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Нове рев'ю</button></div>
+      <div class="kpis">
+        <div class="card kpi"><div class="muted">Середня оцінка</div><div class="v">73</div><span class="d up">▲ +9 за місяць</span></div>
+        <div class="card kpi"><div class="muted">Рев'ю</div><div class="v">12</div><span class="d muted">за 30 днів</span></div>
+        <div class="card kpi"><div class="muted">Знайдено проблем</div><div class="v">31</div><span class="d up">▼ −18%</span></div>
+        <div class="card kpi"><div class="muted">Критичних</div><div class="v" style="color:var(--crit)">3</div><span class="d down">▲ +1</span></div>
+      </div>
+      <div class="two">
+        <div class="card"><h3>Динаміка оцінки</h3><p class="muted" style="margin:4px 0 8px;font-size:13px">Останні 7 рев'ю</p><div id="chart"></div></div>
+        <div class="card"><h3>За категоріями</h3><p class="muted" style="margin:4px 0 0;font-size:13px">Розподіл проблем</p><div class="donut-wrap"><div class="donut" id="donut"></div><div class="legend" id="legend"></div></div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><h3 style="margin-bottom:8px">Історія рев'ю</h3>
+        <div class="scroll-x"><table><thead><tr><th>#</th><th>Файл</th><th>Оцінка</th><th>Проблем</th><th>Статус</th><th>Дата</th></tr></thead><tbody id="hist"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="tabbar" id="tabbar"></nav>
+
+<script>
+/* ---------- дані ---------- */
+const NAV = [
+  ['projects', 'Проєкти', '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'],
+  ['new', "Нове рев'ю", '<path d="M12 5v14M5 12h14"/>'],
+  ['result', 'Результат', '<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>'],
+  ['stats', 'Статистика', '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'],
+];
+const CODE = [
+  'import os', '', 'def get_user(name):',
+  '    query = "SELECT * FROM users WHERE name = \'" + name + "\'"',
+  '    return db.execute(query)', '', 'def calc(expr):', '    return eval(expr)', '',
+  'def read(path):', '    f = open(path)', '    try:', '        return f.read()', '    except:', '        pass',
+];
+const CATS = { bug: 'Баги', security: 'Безпека', style: 'Стиль', performance: 'Продуктивність' };
+const SEV = { critical: 'Критично', warning: 'Увага', info: 'Інфо' };
+const CAT_ICON = { bug: '<path d="M8 2l1.9 1.9M16 2l-1.9 1.9M9 8a3 3 0 0 1 6 0M12 20a6 6 0 0 1-6-6v-3h12v3a6 6 0 0 1-6 6zM12 11v9M3 13h3M18 13h3M4 7l3 2M20 7l-3 2M4 19l3-2M20 19l-3-2"/>', security: '<path d="M12 3 4 6v6c0 4.5 3.2 7.7 8 9 4.8-1.3 8-4.5 8-9V6z"/>', style: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', performance: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>' };
+const COMMENTS = [
+  { cat: 'security', sev: 'critical', line: 4, msg: "SQL-ін'єкція: значення name підставляється в запит конкатенацією, зловмисник може змінити логіку запиту.", rm: 'query = "SELECT * FROM users WHERE name = \'" + name + "\'"', add: 'db.execute("SELECT * FROM users WHERE name = :n", {"n": name})', ref: 'OWASP A03:2021 — Injection' },
+  { cat: 'security', sev: 'critical', line: 8, msg: 'eval() виконує довільний код, що прийшов від користувача. Це повний віддалений доступ до процесу.', rm: 'return eval(expr)', add: 'return ast.literal_eval(expr)', ref: 'OWASP A03:2021 — Injection' },
+  { cat: 'bug', sev: 'warning', line: 14, msg: 'Голий except приховує помилки та перехоплює навіть KeyboardInterrupt, діагностика стає неможливою.', rm: 'except:\n    pass', add: 'except OSError as e:\n    logger.error("read failed: %s", e)', ref: 'PEP 8 — Programming Recommendations' },
+  { cat: 'performance', sev: 'warning', line: 11, msg: 'Файл відкривається без закриття: при винятку дескриптор витікає.', rm: 'f = open(path)', add: 'with open(path) as f:', ref: 'PEP 343 — The "with" statement' },
+  { cat: 'style', sev: 'info', line: 1, msg: 'Імпорт os не використовується.', rm: 'import os', add: '', ref: 'pyflakes F401' },
+];
+const PROJECTS = [
+  { n: 'backend-api', d: 'FastAPI сервіс обліку замовлень', s: 82, r: 12, t: [55, 60, 58, 70, 74, 79, 82], c: '#3b82f6' },
+  { n: 'telegram-bot', d: 'Бот для нагадувань', s: 61, r: 5, t: [48, 52, 50, 58, 55, 60, 61], c: '#f59e0b' },
+  { n: 'ml-notebooks', d: 'Експерименти з даними', s: 44, r: 3, t: [40, 38, 45, 42, 41, 43, 44], c: '#a855f7' },
+];
+const HIST = [
+  ['#42', 'app/services/users.py', 54, 5, 'done', 'сьогодні'], ['#41', 'app/api/auth.py', 78, 2, 'done', 'вчора'],
+  ['#40', 'app/models/order.py', 88, 1, 'done', '12.10'], ['#39', 'app/main.py', 0, 0, 'failed', '11.10'], ['#38', 'app/core/config.py', 71, 4, 'done', '09.10'],
+];
+const TREND = [52, 58, 55, 66, 71, 76, 82];
+
+/* ---------- утиліти ---------- */
+const $ = id => document.getElementById(id);
+const ico = (p, s) => `<svg class="i" viewBox="0 0 24 24"${s ? ` style="${s}"` : ''}>${p}</svg>`;
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const col = n => n >= 75 ? 'var(--ok)' : n >= 55 ? 'var(--warn)' : 'var(--crit)';
+function spark(vals, color, w = 110, h = 36) {
+  const mx = Math.max(...vals), mn = Math.min(...vals), p = vals.map((v, i) => [i * (w / (vals.length - 1)), h - 4 - (v - mn) / (mx - mn || 1) * (h - 8)]);
+  const d = p.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function highlight(line) {
+  const re = /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(def|return|import|try|except|pass|as|with|from|if|else|class)\b|\b(eval|open|print)\b(?=\()|\b([a-z_]\w*)(?=\()/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const [t, c, s, k, b, f] = m;
+    out += `<span class="${c ? 'tk-c' : s ? 'tk-s' : k ? 'tk-k' : b ? 'tk-b' : 'tk-f'}">${esc(t)}</span>`;
+    last = m.index + t.length;
+  }
+  return out + esc(line.slice(last));
+}
+
+/* ---------- рендер ---------- */
+$('sideNav').innerHTML = NAV.map(([id, t, p]) => `<button class="nav-item" data-s="${id}">${ico(p)}${t}</button>`).join('');
+$('tabbar').innerHTML = NAV.map(([id, t, p]) => `<button data-s="${id}">${ico(p, 'width:22px;height:22px')}${t.replace("Нове рев'ю", 'Нове')}</button>`).join('');
+
+$('projGrid').innerHTML = PROJECTS.map(p => `
+  <div class="card proj" onclick="go('stats')">
+    <div class="row"><div><b style="font-size:16px">${p.n}</b><div class="muted" style="font-size:13px;margin-top:2px">${p.d}</div></div><span class="lang"><i style="background:${p.c}"></i>Python</span></div>
+    <div class="meta"><div><div class="big" style="color:${col(p.s)}">${p.s}</div><div class="muted" style="font-size:12px;margin-top:4px">${p.r} рев'ю</div></div>${spark(p.t, col(p.s))}</div>
+  </div>`).join('') + `<button class="card proj add">${ico('<path d="M12 5v14M5 12h14"/>', 'width:26px;height:26px')}<span style="margin-top:6px;font-weight:600">Новий проєкт</span></button>`;
+
+$('src').value = CODE.join('\n');
+
+$('code').innerHTML = CODE.map((t, i) => {
+  const c = COMMENTS.find(x => x.line === i + 1);
+  return `<div class="ln${c ? ' bad' : ''}" data-l="${i + 1}"${c ? ` style="--c:var(--${c.sev === 'critical' ? 'crit' : c.sev === 'warning' ? 'warn' : 'info'})"` : ''}><span class="n">${i + 1}</span><span class="t">${highlight(t) || ' '}</span></div>`;
+}).join('');
+
+const counts = Object.fromEntries(Object.keys(CATS).map(k => [k, COMMENTS.filter(c => c.cat === k).length]));
+$('sumChips').innerHTML = Object.entries(CATS).map(([k, v]) => counts[k] ? `<span class="badge ${k}">${v} · ${counts[k]}</span>` : '').join('');
+$('filters').innerHTML = `<button class="chip on" data-f="all">Усі <em>${COMMENTS.length}</em></button>` + Object.entries(CATS).map(([k, v]) => `<button class="chip" data-f="${k}">${v} <em>${counts[k]}</em></button>`).join('');
+
+function renderComments(f) {
+  $('comments').innerHTML = COMMENTS.filter(c => f === 'all' || c.cat === f).map((c, i) => `
+    <div class="card comment ${c.cat}" data-l="${c.line}">
+      <div class="in">
+        <div class="top"><span class="badge ${c.cat}">${ico(CAT_ICON[c.cat], 'width:13px;height:13px')}${CATS[c.cat]}</span><span class="badge ${c.sev}"><span class="dot"></span>${SEV[c.sev]}</span><span class="line mono">рядок ${c.line}</span></div>
+        <p>${c.msg}</p>
+        <div class="diff"><div class="rm">− ${esc(c.rm).replace(/\n/g, '\n− ')}</div>${c.add ? `<div class="add">+ ${esc(c.add).replace(/\n/g, '\n+ ')}</div>` : ''}</div>
+        <div class="ref">${ico('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/>', 'width:14px;height:14px')}${c.ref}</div>
+        <div class="ask"><input class="input" placeholder="Запитати AI: чому це погано?" onclick="event.stopPropagation()"><button class="btn sm" onclick="event.stopPropagation()">Запитати</button></div>
+      </div>
+    </div>`).join('');
+}
+renderComments('all');
+
+/* Графік: область + лінія */
+(function () {
+  const W = 560, H = 220, px = 34, py = 18, mx = 100;
+  const pts = TREND.map((v, i) => [px + i * ((W - px - 12) / (TREND.length - 1)), py + (1 - v / mx) * (H - py * 2)]);
+  const line = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
+  const area = line + ` L${pts[pts.length - 1][0]} ${H - py} L${pts[0][0]} ${H - py}Z`;
+  const grid = [0, 25, 50, 75, 100].map(v => { const y = py + (1 - v / mx) * (H - py * 2); return `<line x1="${px}" x2="${W - 8}" y1="${y}" y2="${y}" stroke="var(--border)" stroke-dasharray="3 5"/><text x="0" y="${y + 4}" fill="var(--faint)" font-size="11">${v}</text>`; }).join('');
+  $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Динаміка оцінки"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#ag)"/><path d="${line}" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs>${pts.map((q, i) => `<circle cx="${q[0]}" cy="${q[1]}" r="5" fill="var(--surface)" stroke="var(--accent2)" stroke-width="2.5"><title>Рев'ю ${i + 1}: ${TREND[i]}</title></circle>`).join('')}</svg>`;
+})();
+
+/* Бублик */
+(function () {
+  const data = [['bug', 9], ['security', 6], ['style', 14], ['performance', 2]], total = data.reduce((a, d) => a + d[1], 0), R = 56, C = 2 * Math.PI * R;
+  let off = 0, segs = '';
+  data.forEach(([k, v]) => { const len = v / total * C; segs += `<circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--${k})" stroke-width="16" stroke-dasharray="${Math.max(len - 3, 0)} ${C}" stroke-dashoffset="${-off}"/>`; off += len; });
+  $('donut').innerHTML = `<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--border)" stroke-width="16"/>${segs}</svg><div class="c"><div>${total}<small>проблем</small></div></div>`;
+  $('legend').innerHTML = data.map(([k, v]) => `<div style="--c:var(--${k})"><i></i>${CATS[k]}<b>${v}</b></div>`).join('');
+})();
+
+$('hist').innerHTML = HIST.map(h => `<tr onclick="go('result')"><td class="mono faint">${h[0]}</td><td class="mono">${h[1]}</td><td style="font-weight:700;color:${h[4] === 'failed' ? 'var(--faint)' : col(h[2])}">${h[4] === 'failed' ? '—' : h[2]}</td><td>${h[3]}</td><td><span class="badge ${h[4]}"><span class="dot"></span>${h[4] === 'done' ? 'готово' : 'помилка'}</span></td><td class="muted">${h[5]}</td></tr>`).join('');
+
+/* ---------- інтерактив ---------- */
+function go(id) {
+  document.body.classList.remove('auth-mode');
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  document.querySelectorAll('[data-s]').forEach(b => b.classList.toggle('on', b.dataset.s === id));
+  window.scrollTo(0, 0);
+  if (id === 'result') setTimeout(() => $('ringArc').style.strokeDashoffset = 326.7 * (1 - .54), 80);
+  else $('ringArc').style.strokeDashoffset = 326.7;
+}
+function enter() { go('projects'); }
+document.addEventListener('click', e => {
+  const n = e.target.closest('[data-s]'); if (n) go(n.dataset.s);
+  const f = e.target.closest('[data-f]');
+  if (f) { document.querySelectorAll('#filters .chip').forEach(c => c.classList.toggle('on', c === f)); renderComments(f.dataset.f); }
+  const t = e.target.closest('#srcTabs [data-t]');
+  if (t) { document.querySelectorAll('#srcTabs button').forEach(b => b.classList.toggle('on', b === t)); $('t-paste').style.display = t.dataset.t === 'paste' ? '' : 'none'; $('t-url').style.display = t.dataset.t === 'url' ? '' : 'none'; }
+  const m = e.target.closest('.seg [data-m]');
+  if (m) { document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b === m)); $('authTitle').textContent = m.dataset.m === 'in' ? 'З поверненням' : 'Створити акаунт'; }
+  const c = e.target.closest('.comment');
+  if (c) {
+    document.querySelectorAll('.comment').forEach(x => x.classList.toggle('sel', x === c));
+    document.querySelectorAll('.ln').forEach(x => x.classList.toggle('active', x.dataset.l === c.dataset.l));
+    const ln = document.querySelector(`.ln[data-l="${c.dataset.l}"]`); ln && ln.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+});
+function toggleTheme() { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; }
+
+/* статус рев'ю: queued → processing → done */
+const STEPS = [['Прийнято в чергу', 'Задача поставлена в Redis'], ['Лінтер та пошук по документації', 'pyflakes, RAG по PEP 8 / OWASP'], ['Аналіз Gemini', 'Формування звіту'], ['Готово', 'Результат збережено']];
+function drawSteps(cur) {
+  $('stepper').innerHTML = STEPS.map((s, i) => `<div class="step ${i < cur ? 'complete' : i === cur ? 'active' : ''}"><div class="ic">${i < cur ? ico('<path d="m5 12 5 5L20 7"/>', 'width:14px;height:14px') : i + 1}</div><div><b>${s[0]}</b><span>${s[1]}</span></div></div>`).join('');
+}
+drawSteps(-1);
+function submitReview() {
+  const btn = $('sendBtn'); btn.disabled = true; btn.style.opacity = .6;
+  let i = 0; drawSteps(0);
+  const t = setInterval(() => { i++; drawSteps(i); if (i >= STEPS.length) { clearInterval(t); btn.disabled = false; btn.style.opacity = 1; setTimeout(() => go('result'), 700); } }, 1100);
+}
+</script>
+</body>
+</html>

@@ -11,5 +11,6 @@ class CommentResponse(BaseModel):
     line_number: Optional[int]
     message: str
     suggestion: str
+    reference: Optional[str]
 
     model_config = {"from_attributes": True}

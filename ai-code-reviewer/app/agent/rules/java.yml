@@ -1,0 +1,72 @@
+rules:
+  - id: java-sql-injection
+    languages: [java]
+    severity: ERROR
+    message: SQL-запит будується конкатенацією рядків з даними користувача.
+    pattern-either:
+      - pattern: $S.executeQuery("..." + $X)
+      - pattern: $S.executeUpdate("..." + $X)
+      - pattern: $S.execute("..." + $X)
+      - pattern: $C.prepareStatement("..." + $X)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використовуйте PreparedStatement з параметрами ?"
+
+  - id: java-runtime-exec
+    languages: [java]
+    severity: ERROR
+    message: Runtime.exec з динамічним рядком вразливий до ін'єкції команд.
+    pattern: Runtime.getRuntime().exec($X + ...)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Передавайте команду та аргументи окремо через ProcessBuilder"
+
+  - id: java-weak-hash
+    languages: [java]
+    severity: WARNING
+    message: MD5/SHA-1 вважаються слабкими алгоритмами.
+    pattern-either:
+      - pattern: MessageDigest.getInstance("MD5")
+      - pattern: MessageDigest.getInstance("SHA-1")
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      fix: "Для паролів використовуйте bcrypt/Argon2, для хешів SHA-256 або сильніше"
+
+  - id: java-empty-catch
+    languages: [java]
+    severity: WARNING
+    message: Порожній блок catch мовчки ковтає виняток.
+    pattern: |
+      try {
+        ...
+      } catch ($T $E) {
+      }
+    metadata:
+      category: bug
+      reference: "Google Java Style Guide - 6.2 Caught exceptions: not ignored"
+      fix: "Залогуйте або обробіть виняток"
+
+  - id: java-print-stack-trace
+    languages: [java]
+    severity: INFO
+    message: printStackTrace() виводить стек у stderr замість журналу.
+    pattern: $E.printStackTrace()
+    metadata:
+      category: style
+      owasp: "A09:2021 - Security Logging and Monitoring Failures"
+      fix: "Використовуйте логер (SLF4J)"
+
+  - id: java-resource-without-try
+    languages: [java]
+    severity: INFO
+    message: Ресурс створюється без try-with-resources, при винятку він не закриється.
+    pattern-either:
+      - pattern: $V = new FileInputStream(...);
+      - pattern: $V = new FileReader(...);
+    metadata:
+      category: performance
+      reference: "Effective Java, Item 9 - prefer try-with-resources"
+      fix: "Використовуйте try-with-resources"

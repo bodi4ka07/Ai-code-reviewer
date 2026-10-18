@@ -29,5 +29,6 @@ class ReviewComment(Base):
     line_number: Mapped[int] = mapped_column(Integer, nullable=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     suggestion: Mapped[str] = mapped_column(Text, nullable=False)
+    reference: Mapped[str] = mapped_column(String(255), nullable=True)
 
     review: Mapped["Review"] = relationship("Review", back_populates="comments")

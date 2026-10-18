@@ -1,0 +1,95 @@
+rules:
+  - id: py-sql-injection
+    languages: [python]
+    severity: ERROR
+    message: SQL-запит будується конкатенацією або форматуванням рядка з даними користувача.
+    pattern-either:
+      - pattern: $CUR.execute("..." + $X)
+      - pattern: $CUR.execute($X + "...")
+      - pattern: $CUR.execute("..." % $X)
+      - pattern: $CUR.execute("...".format(...))
+      - pattern: $CUR.execute(f"...{$X}...")
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використовуйте параметризовані запити"
+
+  - id: py-eval-exec
+    languages: [python]
+    severity: ERROR
+    message: eval()/exec() виконують довільний код.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Використайте ast.literal_eval або явний парсер"
+
+  - id: py-shell-true
+    languages: [python]
+    severity: ERROR
+    message: Виклик підпроцесу з shell=True вразливий до ін'єкції команд.
+    pattern: subprocess.$FUNC(..., shell=True, ...)
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      fix: "Передавайте команду списком аргументів без shell=True"
+
+  - id: py-pickle-loads
+    languages: [python]
+    severity: ERROR
+    message: Десеріалізація pickle з недовірених даних дозволяє виконати код.
+    pattern-either:
+      - pattern: pickle.loads(...)
+      - pattern: pickle.load(...)
+    metadata:
+      category: security
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+      fix: "Використовуйте JSON або іншу безпечну серіалізацію"
+
+  - id: py-weak-hash
+    languages: [python]
+    severity: WARNING
+    message: MD5/SHA1 вважаються слабкими, не використовуйте їх для паролів чи підписів.
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: hashlib.sha1(...)
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      fix: "Для паролів використовуйте bcrypt, scrypt або Argon2"
+
+  - id: py-yaml-unsafe-load
+    languages: [python]
+    severity: WARNING
+    message: yaml.load без SafeLoader може створювати довільні об'єкти.
+    pattern: yaml.load($X)
+    metadata:
+      category: security
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+      fix: "Використовуйте yaml.safe_load"
+
+  - id: py-bare-except
+    languages: [python]
+    severity: WARNING
+    message: Голий except перехоплює все, включно з KeyboardInterrupt, і приховує помилки.
+    pattern: |
+      try:
+          ...
+      except:
+          ...
+    metadata:
+      category: bug
+      reference: "PEP 8 - Programming Recommendations"
+      fix: "Перехоплюйте конкретний виняток і логуйте його"
+
+  - id: py-open-without-with
+    languages: [python]
+    severity: INFO
+    message: Файл відкривається без контекстного менеджера, дескриптор може витекти.
+    pattern: $F = open(...)
+    metadata:
+      category: performance
+      reference: "PEP 343 - The with statement"
+      fix: "Використовуйте with open(...) as f"

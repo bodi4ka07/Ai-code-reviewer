@@ -21,9 +21,11 @@ class Review(Base):
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
     code_snippet: Mapped[str] = mapped_column(Text, nullable=True)
     github_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    language: Mapped[str] = mapped_column(String(50), default="python", nullable=False)
     status: Mapped[ReviewStatus] = mapped_column(SAEnum(ReviewStatus), default=ReviewStatus.PENDING)
     overall_score: Mapped[int] = mapped_column(Integer, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
