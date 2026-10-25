@@ -45,6 +45,8 @@ class ReviewResponse(BaseModel):
 
 
 class ReviewDetailResponse(ReviewResponse):
+    code_snippet: Optional[str]
+    github_url: Optional[str]
     comments: list[CommentResponse] = []
 
 

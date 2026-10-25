@@ -71,6 +71,13 @@ async def test_queue_failure_marks_review_failed(client, auth, project_id, monke
     assert "redis" not in resp.json()["error_message"].lower()
 
 
+async def test_review_detail_contains_code(client, auth, project_id):
+    rid = (await client.post("/reviews/", json={"project_id": project_id, "code_snippet": CODE}, headers=auth)).json()["id"]
+    body = (await client.get(f"/reviews/{rid}", headers=auth)).json()
+    assert body["code_snippet"] == CODE
+    assert body["github_url"] is None
+
+
 async def test_get_review_and_ownership(client, auth, other_auth, project_id):
     rid = (await client.post("/reviews/", json={"project_id": project_id, "code_snippet": CODE}, headers=auth)).json()["id"]
     assert (await client.get(f"/reviews/{rid}", headers=auth)).status_code == 200

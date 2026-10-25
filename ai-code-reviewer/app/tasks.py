@@ -54,6 +54,8 @@ async def _process_review(review_id: str, session_factory=None):
 
                 review.overall_score = analysis.overall_score
                 review.summary = analysis.summary
+                if not review.code_snippet:
+                    review.code_snippet = analysis.code  # зберігаємо код, завантажений з GitHub
                 review.status = ReviewStatus.DONE
                 review.completed_at = datetime.utcnow()
 

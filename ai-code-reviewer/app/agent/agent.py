@@ -52,6 +52,7 @@ class AgentResult:
     overall_score: int
     summary: str
     comments: list[AgentComment]
+    code: str = ""  # код, який було проаналізовано (для файлів з GitHub він завантажується тут)
 
 
 class CodeReviewAgent:
@@ -175,4 +176,5 @@ class CodeReviewAgent:
             overall_score=max(0, min(100, payload.overall_score)),
             summary=payload.summary,
             comments=comments,
+            code=code,
         )

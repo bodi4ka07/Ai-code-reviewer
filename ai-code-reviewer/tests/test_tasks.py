@@ -56,6 +56,20 @@ async def test_successful_review_is_saved(session_factory, review_id, monkeypatc
     assert calls["language"] == "python"  # мова рев'ю доходить до агента
 
 
+async def test_github_code_is_stored_for_display(session_factory, client, auth, project_id, monkeypatch):
+    async with session_factory() as db:
+        review = Review(project_id=uuid.UUID(project_id), github_url="https://github.com/o/r/blob/m/a.py")
+        db.add(review)
+        await db.commit()
+        rid = str(review.id)
+    fake_agent(monkeypatch, AgentResult(overall_score=70, summary="ок", comments=[], code="print('hi')"))
+
+    await tasks._process_review(rid, session_factory=session_factory)
+
+    saved, _ = await _load(session_factory, rid)
+    assert saved.code_snippet == "print('hi')"
+
+
 async def test_agent_error_marks_failed_with_user_message(session_factory, review_id, monkeypatch):
     fake_agent(monkeypatch, AgentError("Сервіс AI тимчасово недоступний."))
     await tasks._process_review(review_id, session_factory=session_factory)
