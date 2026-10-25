@@ -19,7 +19,21 @@ cp .env.example .env        # заповни GEMINI_API_KEY та SECRET_KEY
 docker compose up --build   # міграції та наповнення RAG виконуються автоматично
 ```
 
-Документація API: http://localhost:8000/docs
+Після запуску:
+- застосунок (клієнт): http://localhost:5173
+- документація API: http://localhost:8000/docs
+
+## Клієнт
+
+React + JavaScript (Vite), PWA: працює в браузері на ПК і встановлюється на телефон. Усі запити йдуть на `/api`, який проксує nginx (у Docker) або Vite (у розробці), тому CORS не потрібен.
+
+```bash
+cd client
+npm install
+npm run dev      # http://localhost:5173, API очікується на localhost:8000
+```
+
+Встановлення PWA на телефон вимагає HTTPS (або localhost); для демо з телефона використайте тунель, наприклад cloudflared чи ngrok.
 
 Перезавантажити документацію для RAG: `docker compose exec api python scripts/seed_docs.py --reset`
 
@@ -72,5 +86,6 @@ app/
 └── tasks.py        # Celery-задачі
 alembic/versions/   # Міграції
 scripts/seed_docs.py # Наповнення RAG
+client/             # React-клієнт (Vite, PWA)
 mockups/            # HTML-макет інтерфейсу
 ```
