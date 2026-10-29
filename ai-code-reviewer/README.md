@@ -33,6 +33,8 @@ npm install
 npm run dev      # http://localhost:5173, API очікується на localhost:8000
 ```
 
+`npm run dev` також друкує в терміналі QR-код з адресою для телефона (та сама Wi-Fi мережа). Для власної адреси, наприклад HTTPS-тунелю: `npm run qr -- https://адреса`.
+
 Встановлення PWA на телефон вимагає HTTPS (або localhost); для демо з телефона використайте тунель, наприклад cloudflared чи ngrok.
 
 Перезавантажити документацію для RAG: `docker compose exec api python scripts/seed_docs.py --reset`
