@@ -139,7 +139,10 @@ async def test_ask_about_comment(client, auth, project_id, session_factory, monk
         f"/reviews/{rid}/ask", json={"question": "чому це погано?", "comment_id": cid}, headers=auth
     )
     assert resp.status_code == 200
-    assert resp.json() == {"answer": "Відповідь AI"}
+    body = resp.json()
+    assert body["answer"] == "Відповідь AI"
+    assert body["question"] == "чому це погано?"
+    assert body["comment_id"] == cid
     assert "КОНКРЕТНОГО КОМЕНТАРЯ" in fake.prompts[0]
     assert "literal_eval" in fake.prompts[0]
 
@@ -157,3 +160,48 @@ async def test_ask_validates_question_length(client, auth, project_id, session_f
     rid, _ = await _done_review(session_factory, project_id)
     resp = await client.post(f"/reviews/{rid}/ask", json={"question": "x" * 1001}, headers=auth)
     assert resp.status_code == 422
+
+
+async def test_questions_are_saved_and_returned_in_review(client, auth, project_id, session_factory, monkeypatch):
+    fake = FakeGemini()
+    monkeypatch.setattr("google.genai.Client", lambda api_key: fake)
+    rid, cid = await _done_review(session_factory, project_id)
+
+    await client.post(f"/reviews/{rid}/ask", json={"question": "перше питання", "comment_id": cid}, headers=auth)
+    await client.post(f"/reviews/{rid}/ask", json={"question": "друге питання", "comment_id": cid}, headers=auth)
+    await client.post(f"/reviews/{rid}/ask", json={"question": "загальне питання"}, headers=auth)
+
+    review = (await client.get(f"/reviews/{rid}", headers=auth)).json()
+    assert [q["question"] for q in review["questions"]] == ["перше питання", "друге питання", "загальне питання"]
+    assert [q["comment_id"] for q in review["questions"]] == [cid, cid, None]
+
+
+async def test_previous_answers_are_given_to_ai_as_context(client, auth, project_id, session_factory, monkeypatch):
+    fake = FakeGemini()
+    monkeypatch.setattr("google.genai.Client", lambda api_key: fake)
+    rid, cid = await _done_review(session_factory, project_id)
+
+    await client.post(f"/reviews/{rid}/ask", json={"question": "перше питання", "comment_id": cid}, headers=auth)
+    await client.post(f"/reviews/{rid}/ask", json={"question": "друге питання", "comment_id": cid}, headers=auth)
+    await client.post(f"/reviews/{rid}/ask", json={"question": "інше питання"}, headers=auth)
+
+    assert "ПОПЕРЕДНІ ПИТАННЯ" not in fake.prompts[0]  # перше питання: історії ще немає
+    assert "ПОПЕРЕДНІ ПИТАННЯ" in fake.prompts[1] and "Питання: перше питання" in fake.prompts[1]
+    assert "ПОПЕРЕДНІ ПИТАННЯ" not in fake.prompts[2]  # питання без коментаря: історія коментаря не потрапляє
+
+
+async def test_ai_failure_saves_nothing(client, auth, project_id, session_factory, monkeypatch):
+    class Broken:
+        class aio:
+            class models:
+                @staticmethod
+                async def generate_content(model, contents, config=None):
+                    raise RuntimeError("secret internal detail")
+
+    monkeypatch.setattr("google.genai.Client", lambda api_key: Broken())
+    rid, _ = await _done_review(session_factory, project_id)
+
+    resp = await client.post(f"/reviews/{rid}/ask", json={"question": "питання"}, headers=auth)
+    assert resp.status_code == 503
+    assert "secret" not in resp.text
+    assert (await client.get(f"/reviews/{rid}", headers=auth)).json()["questions"] == []

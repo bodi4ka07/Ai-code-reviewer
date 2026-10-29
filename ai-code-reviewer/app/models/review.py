@@ -31,3 +31,6 @@ class Review(Base):
 
     project: Mapped["Project"] = relationship("Project", back_populates="reviews")
     comments: Mapped[list["ReviewComment"]] = relationship("ReviewComment", back_populates="review", cascade="all, delete-orphan")
+    questions: Mapped[list["ReviewQuestion"]] = relationship(
+        "ReviewQuestion", back_populates="review", cascade="all, delete-orphan", order_by="ReviewQuestion.created_at"
+    )

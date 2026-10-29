@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
     SEMGREP_BIN: str = "semgrep"
 
+    # Відновлення пароля. Без SMTP посилання для скидання пишеться в лог сервера
+    APP_URL: str = "http://localhost:5173"  # адреса клієнта, яка потрапляє в посилання з листа
+    PASSWORD_RESET_MINUTES: int = 30
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+
     # App
     APP_ENV: str = "development"
     DEBUG: bool = True

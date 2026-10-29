@@ -44,10 +44,21 @@ class ReviewResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class QuestionResponse(BaseModel):
+    id: uuid.UUID
+    comment_id: Optional[uuid.UUID]
+    question: str
+    answer: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ReviewDetailResponse(ReviewResponse):
     code_snippet: Optional[str]
     github_url: Optional[str]
     comments: list[CommentResponse] = []
+    questions: list[QuestionResponse] = []
 
 
 class AskRequest(BaseModel):
@@ -55,5 +66,6 @@ class AskRequest(BaseModel):
     comment_id: Optional[uuid.UUID] = None
 
 
-class AskResponse(BaseModel):
-    answer: str
+# Відповідь на питання: збережений запис, поле answer лишається сумісним зі старим форматом
+class AskResponse(QuestionResponse):
+    pass

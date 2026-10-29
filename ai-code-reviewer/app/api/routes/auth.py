@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import ForgotPasswordRequest, MessageResponse, ResetPasswordRequest, UserCreate, UserResponse
+from app.services import email_service, password_reset_service
 from app.schemas.token import Token
 from app.core.security import verify_password, get_password_hash, create_access_token
 
@@ -40,3 +41,28 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+async def forgot_password(
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    """Надіслати на email посилання для скидання пароля.
+
+    Відповідь завжди однакова, незалежно від того, чи існує такий акаунт, щоб не розкривати зареєстровані адреси.
+    Лист надсилається у фоні, тож і час відповіді не видає наявність акаунта.
+    """
+    created = await password_reset_service.create_reset_link(db, data.email)
+    if created:
+        email, link = created
+        background_tasks.add_task(email_service.send_password_reset_email, email, link)
+    return {"message": "Якщо акаунт з такою адресою існує, ми надіслали на неї лист з посиланням для скидання пароля."}
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    """Задати новий пароль за одноразовим посиланням з листа."""
+    await password_reset_service.reset_password(db, data.token, data.password)
+    return {"message": "Пароль змінено. Тепер можна увійти з новим паролем."}

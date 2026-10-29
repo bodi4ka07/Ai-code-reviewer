@@ -55,5 +55,4 @@ async def ask_about_review(
 ):
     """Уточнююче питання до AI по рев'ю або по конкретному коментарю."""
     review = await review_service.get_owned_review(db, review_id, current_user.id)
-    answer = await review_service.answer_question(review, data.question, data.comment_id)
-    return {"answer": answer}
+    return await review_service.answer_question(db, review, data.question, data.comment_id)
