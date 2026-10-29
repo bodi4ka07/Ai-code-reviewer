@@ -2,27 +2,31 @@ import { useState } from 'react';
 import { api } from '../api.js';
 import { CATEGORIES, SEVERITIES } from '../utils.js';
 import { Icon } from './Icon.jsx';
+import Markdown from './Markdown.jsx';
 
-export default function CommentCard({ comment, reviewId, selected, onSelect }) {
+// questions: уже збережені питання та відповіді саме до цього коментаря
+export default function CommentCard({ comment, reviewId, questions, selected, onSelect, onAsked }) {
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
   const [asking, setAsking] = useState(false);
 
   const ask = async (e) => {
     e.preventDefault();
-    if (!question.trim()) return;
+    const text = question.trim();
+    if (!text) return;
     setAsking(true);
     setError('');
     try {
-      const res = await api.ask(reviewId, question.trim(), comment.id);
-      setAnswer(res.answer);
+      onAsked(await api.ask(reviewId, text, comment.id));
+      setQuestion('');
     } catch (err) {
       setError(err.message);
     } finally {
       setAsking(false);
     }
   };
+
+  const stop = (e) => e.stopPropagation();
 
   return (
     <div
@@ -49,7 +53,20 @@ export default function CommentCard({ comment, reviewId, selected, onSelect }) {
         </div>
       )}
 
-      <form className="ask" onSubmit={ask} onClick={(e) => e.stopPropagation()}>
+      {questions.length > 0 && (
+        <div className="qa" onClick={stop}>
+          {questions.map((q) => (
+            <div key={q.id} className="qa-item">
+              <div className="qa-q">{q.question}</div>
+              <div className="answer">
+                <Markdown>{q.answer}</Markdown>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form className="ask" onSubmit={ask} onClick={stop}>
         <input
           className="input"
           placeholder="Запитати AI: чому це погано? покажи виправлений варіант"
@@ -62,11 +79,6 @@ export default function CommentCard({ comment, reviewId, selected, onSelect }) {
         </button>
       </form>
       {error && <div className="form-error">{error}</div>}
-      {answer && (
-        <div className="answer" onClick={(e) => e.stopPropagation()}>
-          {answer}
-        </div>
-      )}
     </div>
   );
 }

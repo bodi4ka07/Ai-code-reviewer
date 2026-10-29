@@ -74,4 +74,13 @@ export const api = {
   review: (id) => request(`/reviews/${id}`),
   ask: (id, question, commentId) =>
     request(`/reviews/${id}/ask`, { method: 'POST', body: { question, comment_id: commentId || null } }),
+
+  chats: () => request('/chats/'),
+  createChat: (title) => request('/chats/', { method: 'POST', body: { title: title || null } }),
+  chat: (id) => request(`/chats/${id}`),
+  deleteChat: (id) => request(`/chats/${id}`, { method: 'DELETE' }),
+  sendChatMessage: (id, content) => request(`/chats/${id}/messages`, { method: 'POST', body: { content } }),
+
+  forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token, password) => request('/auth/reset-password', { method: 'POST', body: { token, password } }),
 };

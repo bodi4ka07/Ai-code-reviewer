@@ -1,10 +1,33 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import qrcode from 'qrcode-terminal';
+
+// Після запуску `npm run dev` друкує QR-код з адресою для телефона (та сама Wi-Fi мережа)
+function terminalQr() {
+  // Домашні мережі (192.168.x, 10.x) першими, віртуальні адаптери (Docker, WSL) останніми
+  const rank = (url) => (/\/\/(192\.168|10\.)/.test(url) ? 0 : /\/\/172\.(1[6-9]|2\d|3[01])\./.test(url) ? 2 : 1);
+
+  return {
+    name: 'terminal-qr',
+    configureServer(server) {
+      const printUrls = server.printUrls.bind(server);
+      server.printUrls = () => {
+        printUrls();
+        const [url] = [...(server.resolvedUrls?.network || [])].sort((a, b) => rank(a) - rank(b));
+        if (!url) return;
+        console.log('\n  Відкрийте на телефоні (той самий Wi-Fi, що й комп\'ютер):\n');
+        qrcode.generate(url, { small: true }, (code) => console.log(code.replace(/^/gm, '  ')));
+        console.log(`  ${url}\n`);
+      };
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
+    terminalQr(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg'],

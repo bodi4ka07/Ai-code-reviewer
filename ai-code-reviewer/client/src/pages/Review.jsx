@@ -11,7 +11,7 @@ const POLL_MS = 2000;
 const STEPS = [
   ['Прийнято в чергу', 'Задачу поставлено на обробку'],
   ['Статичний аналіз і пошук по документації', 'Лінтер та RAG по стандартах'],
-  ['Аналіз Gemini', 'Формування звіту'],
+  ['Аналіз', 'Формування звіту'],
   ["Рев'ю готове", 'Результат збережено'],
 ];
 
@@ -103,6 +103,9 @@ export default function Review() {
   const visible = comments.filter((c) => filter === 'all' || c.category === filter);
   const back = `/projects/${review.project_id}`;
 
+  // Нове питання зберігається в стані рев'ю, тому не зникає при зміні фільтра
+  const addQuestion = (q) => setReview((r) => ({ ...r, questions: [...r.questions, q] }));
+
   const select = (line, commentId) => {
     setActiveLine(line);
     setSelected(commentId);
@@ -190,8 +193,10 @@ export default function Review() {
                   key={c.id}
                   comment={c}
                   reviewId={review.id}
+                  questions={review.questions.filter((q) => q.comment_id === c.id)}
                   selected={selected === c.id}
                   onSelect={(line) => select(line, c.id)}
+                  onAsked={addQuestion}
                 />
               ))}
               {visible.length === 0 && <div className="empty">Немає коментарів</div>}

@@ -6,6 +6,9 @@ import Projects from './pages/Projects.jsx';
 import Project from './pages/Project.jsx';
 import NewReview from './pages/NewReview.jsx';
 import Review from './pages/Review.jsx';
+import Chat from './pages/Chat.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -24,6 +27,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={!loading && user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route
         element={
           <RequireAuth>
@@ -35,6 +40,8 @@ export default function App() {
         <Route path="projects/:id" element={<Project />} />
         <Route path="projects/:id/new" element={<NewReview />} />
         <Route path="reviews/:id" element={<Review />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="chat/:id" element={<Chat />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
