@@ -1,0 +1,12 @@
+# Не потрапляє в контекст збірки Docker: швидше збірка й жодних секретів в образі
+.git
+.env
+.pytest_cache
+__pycache__
+*.pyc
+.venv
+venv
+client/node_modules
+client/dist
+mockups
+demo
