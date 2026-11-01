@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import PasswordInput from '../components/PasswordInput.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 
 export default function Login() {
@@ -52,10 +53,8 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <label htmlFor="password">Пароль</label>
-        <input
+        <PasswordInput
           id="password"
-          className="input"
-          type="password"
           required
           minLength={mode === 'up' ? 8 : undefined}
           autoComplete={mode === 'in' ? 'current-password' : 'new-password'}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { Icon } from '../components/Icon.jsx';
-import Markdown from '../components/Markdown.jsx';
+import StreamedMarkdown from '../components/StreamedMarkdown.jsx';
 
 export default function Chat() {
   const { id } = useParams();
@@ -12,7 +12,9 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [freshId, setFreshId] = useState(null); // щойно отримана відповідь показується поступово
   const bottomRef = useRef(null);
+  const scrollDown = () => bottomRef.current?.scrollIntoView({ block: 'end' });
 
   useEffect(() => {
     api.chats().then(setChats).catch((e) => setError(e.message));
@@ -33,7 +35,7 @@ export default function Chat() {
   }, [id]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' });
+    scrollDown();
   }, [current?.messages.length, sending]);
 
   const newChat = async () => {
@@ -74,6 +76,7 @@ export default function Chat() {
     setCurrent(onlyThisChat((c) => ({ ...c, messages: [...c.messages, pending] })));
     try {
       const res = await api.sendChatMessage(chatId, content);
+      setFreshId(res.assistant_message.id);
       setCurrent(
         onlyThisChat((c) => ({
           ...c,
@@ -148,7 +151,7 @@ export default function Chat() {
               )}
               {current?.messages.map((m) => (
                 <div key={m.id} className={`msg ${m.role}`}>
-                  {m.role === 'assistant' ? <Markdown>{m.content}</Markdown> : <div className="msg-text">{m.content}</div>}
+                  {m.role === 'assistant' ? <StreamedMarkdown animate={m.id === freshId} onProgress={scrollDown}>{m.content}</StreamedMarkdown> : <div className="msg-text">{m.content}</div>}
                 </div>
               ))}
               {sending && (

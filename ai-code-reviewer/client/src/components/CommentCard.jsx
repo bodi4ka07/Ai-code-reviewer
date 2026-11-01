@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { api } from '../api.js';
 import { CATEGORIES, SEVERITIES } from '../utils.js';
 import { Icon } from './Icon.jsx';
-import Markdown from './Markdown.jsx';
+import StreamedMarkdown from './StreamedMarkdown.jsx';
 
 // questions: уже збережені питання та відповіді саме до цього коментаря
 export default function CommentCard({ comment, reviewId, questions, selected, onSelect, onAsked }) {
   const [question, setQuestion] = useState('');
   const [error, setError] = useState('');
   const [asking, setAsking] = useState(false);
+  const [freshId, setFreshId] = useState(null); // щойно отримана відповідь показується поступово
 
   const ask = async (e) => {
     e.preventDefault();
@@ -17,7 +18,9 @@ export default function CommentCard({ comment, reviewId, questions, selected, on
     setAsking(true);
     setError('');
     try {
-      onAsked(await api.ask(reviewId, text, comment.id));
+      const saved = await api.ask(reviewId, text, comment.id);
+      setFreshId(saved.id);
+      onAsked(saved);
       setQuestion('');
     } catch (err) {
       setError(err.message);
@@ -59,7 +62,7 @@ export default function CommentCard({ comment, reviewId, questions, selected, on
             <div key={q.id} className="qa-item">
               <div className="qa-q">{q.question}</div>
               <div className="answer">
-                <Markdown>{q.answer}</Markdown>
+                <StreamedMarkdown animate={q.id === freshId}>{q.answer}</StreamedMarkdown>
               </div>
             </div>
           ))}

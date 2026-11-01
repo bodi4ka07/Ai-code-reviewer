@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
+import PasswordInput from '../components/PasswordInput.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 
 export default function ResetPassword() {
@@ -46,10 +47,8 @@ export default function ResetPassword() {
         ) : (
           <>
             <label htmlFor="password">Новий пароль</label>
-            <input
+            <PasswordInput
               id="password"
-              className="input"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"
@@ -58,10 +57,8 @@ export default function ResetPassword() {
               onChange={(e) => setPassword(e.target.value)}
             />
             <label htmlFor="repeat">Повторіть пароль</label>
-            <input
+            <PasswordInput
               id="repeat"
-              className="input"
-              type="password"
               required
               minLength={8}
               autoComplete="new-password"
