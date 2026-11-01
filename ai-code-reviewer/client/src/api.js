@@ -78,6 +78,7 @@ export const api = {
   chats: () => request('/chats/'),
   createChat: (title) => request('/chats/', { method: 'POST', body: { title: title || null } }),
   chat: (id) => request(`/chats/${id}`),
+  renameChat: (id, title) => request(`/chats/${id}`, { method: 'PATCH', body: { title } }),
   deleteChat: (id) => request(`/chats/${id}`, { method: 'DELETE' }),
   sendChatMessage: (id, content) => request(`/chats/${id}/messages`, { method: 'POST', body: { content } }),
 

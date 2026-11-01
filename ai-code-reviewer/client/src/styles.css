@@ -42,7 +42,7 @@ svg.i { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: rou
 #root { position: relative; }
 
 /* ---------- оболонка ---------- */
-.shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
 aside {
   position: sticky; top: 0; height: 100vh; padding: 20px 14px;
   border-right: 1px solid var(--border);
@@ -151,7 +151,7 @@ form.card > .btn { margin-top: 16px; }
 .ring .num { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
 .ring .num small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.split { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.split { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 /* без цього довгі рядки коду розтягують сторінку за межі екрана */
 .split > *, .two > * { min-width: 0; }
 .code-box { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: var(--code-bg); box-shadow: var(--shadow); }
@@ -185,7 +185,7 @@ pre.code { margin: 0; padding: 10px 0; overflow: auto; max-height: 70vh; font: 1
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 16px; }
 .kpis .card { margin: 0; }
 .kpi .v { font-size: 30px; font-weight: 800; letter-spacing: -.03em; margin-top: 4px; }
-.two { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.two { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 .two .card { margin-bottom: 0; }
 .history { margin-top: 16px; }
 .chart { width: 100%; height: auto; display: block; }
@@ -206,12 +206,12 @@ tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
 /* ---------- адаптив ---------- */
 .tabbar { display: none; }
 @media (min-width: 980px) {
-  .split { grid-template-columns: 1.25fr 1fr; align-items: start; }
+  .split { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
   .sticky { position: sticky; top: 16px; }
-  .two { grid-template-columns: 1.6fr 1fr; }
+  .two { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
-  .shell { grid-template-columns: 1fr; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
   aside { display: none; }
   main { padding: 18px 16px 96px; }
   .tabbar {
@@ -247,9 +247,9 @@ tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
 .md hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
 
 /* ---------- історія питань до коментаря ---------- */
-.qa { margin-top: 14px; display: grid; gap: 10px; cursor: default; }
+.qa { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; cursor: default; }
 .qa-q { display: inline-block; max-width: 100%; padding: 8px 12px; border-radius: 12px 12px 4px 12px; background: var(--grad); color: #fff; font-size: 14px; margin-left: auto; float: right; clear: both; overflow-wrap: anywhere; }
-.qa-item { display: grid; }
+.qa-item { display: grid; grid-template-columns: minmax(0, 1fr); }
 .qa-item .answer { margin-top: 8px; clear: both; }
 .answer { padding: 12px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); cursor: text; }
 
@@ -270,6 +270,10 @@ tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
 .chat-item.active { background: var(--surface2); color: var(--text); box-shadow: inset 2px 0 var(--accent); }
 .chat-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-item .icon-btn { opacity: 0; padding: 3px; } .chat-item:hover .icon-btn, .chat-item.active .icon-btn { opacity: 1; }
+.chat-actions { display: flex; flex-shrink: 0; }
+.icon-btn.edit:hover { color: var(--accent2); }
+.chat-item.editing { padding: 4px 6px; }
+.input.rename { padding: 6px 8px; font-size: 13.5px; }
 .chat-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); min-height: 48px; overflow: hidden; }
 .chat-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-back { display: none; color: var(--accent2); white-space: nowrap; }

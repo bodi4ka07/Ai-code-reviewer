@@ -12,6 +12,8 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [draftTitle, setDraftTitle] = useState('');
   const [freshId, setFreshId] = useState(null); // щойно отримана відповідь показується поступово
   const bottomRef = useRef(null);
   const scrollDown = () => bottomRef.current?.scrollIntoView({ block: 'end' });
@@ -56,6 +58,26 @@ export default function Chat() {
       await api.deleteChat(chat.id);
       setChats((list) => list.filter((c) => c.id !== chat.id));
       if (chat.id === id) navigate('/chat');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const startRename = (chat, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingId(chat.id);
+    setDraftTitle(chat.title);
+  };
+
+  const saveRename = async (chat) => {
+    const title = draftTitle.trim();
+    setEditingId(null);
+    if (!title || title === chat.title) return;
+    try {
+      const updated = await api.renameChat(chat.id, title);
+      setChats((list) => list.map((c) => (c.id === chat.id ? { ...c, title: updated.title } : c)));
+      setCurrent((c) => (c && c.id === chat.id ? { ...c, title: updated.title } : c));
     } catch (err) {
       setError(err.message);
     }
@@ -110,14 +132,37 @@ export default function Chat() {
         <div className="chat-items">
           {chats === null && !error && <div className="empty small">Завантаження…</div>}
           {chats && chats.length === 0 && <div className="empty small">Чатів ще немає</div>}
-          {(chats || []).map((c) => (
-            <NavLink key={c.id} to={`/chat/${c.id}`} className="chat-item">
-              <span className="chat-title">{c.title}</span>
-              <button className="icon-btn" title="Видалити чат" onClick={(e) => removeChat(c, e)}>
-                <Icon name="trash" size={16} />
-              </button>
-            </NavLink>
-          ))}
+          {(chats || []).map((c) =>
+            c.id === editingId ? (
+              <div key={c.id} className="chat-item editing">
+                <input
+                  className="input rename"
+                  autoFocus
+                  maxLength={200}
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => saveRename(c)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.target.blur();
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                />
+              </div>
+            ) : (
+              <NavLink key={c.id} to={`/chat/${c.id}`} className="chat-item">
+                <span className="chat-title">{c.title}</span>
+                <span className="chat-actions">
+                  <button className="icon-btn edit" title="Перейменувати чат" onClick={(e) => startRename(c, e)}>
+                    <Icon name="edit" size={16} />
+                  </button>
+                  <button className="icon-btn" title="Видалити чат" onClick={(e) => removeChat(c, e)}>
+                    <Icon name="trash" size={16} />
+                  </button>
+                </span>
+              </NavLink>
+            ),
+          )}
         </div>
       </div>
 
