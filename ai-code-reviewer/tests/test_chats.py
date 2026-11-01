@@ -126,3 +126,17 @@ async def test_only_recent_history_is_sent(client, auth, monkeypatch):
     sent = texts(fake.calls[-1]["contents"])
     assert len(sent) == chat_service.HISTORY_MESSAGES + 1  # обмежена історія + нове питання
     assert "питання 0" not in sent
+
+
+async def test_rename_chat(client, auth, other_auth):
+    chat = (await client.post("/chats/", json={}, headers=auth)).json()
+
+    resp = await client.patch(f"/chats/{chat['id']}", json={"title": "  Про декоратори  "}, headers=auth)
+    assert resp.status_code == 200
+    assert resp.json()["title"] == "Про декоратори"
+    assert (await client.get(f"/chats/{chat['id']}", headers=auth)).json()["title"] == "Про декоратори"
+
+    assert (await client.patch(f"/chats/{chat['id']}", json={"title": "   "}, headers=auth)).status_code == 422
+    assert (await client.patch(f"/chats/{chat['id']}", json={"title": "x" * 201}, headers=auth)).status_code == 422
+    # чужий чат недоступний
+    assert (await client.patch(f"/chats/{chat['id']}", json={"title": "Хак"}, headers=other_auth)).status_code == 404

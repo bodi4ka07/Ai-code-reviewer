@@ -10,6 +10,7 @@ from app.schemas.chat import (
     ChatCreate,
     ChatDetailResponse,
     ChatResponse,
+    ChatUpdate,
     MessageCreate,
     MessagePairResponse,
 )
@@ -39,6 +40,20 @@ async def get_chat(
     current_user: User = Depends(get_current_user),
 ):
     return await chat_service.get_owned_chat(db, chat_id, current_user.id)
+
+
+@router.patch("/{chat_id}", response_model=ChatResponse)
+async def rename_chat(
+    chat_id: uuid.UUID,
+    data: ChatUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    chat = await chat_service.get_owned_chat(db, chat_id, current_user.id)
+    chat.title = data.title
+    await db.commit()
+    await db.refresh(chat)
+    return chat
 
 
 @router.delete("/{chat_id}", status_code=204)
