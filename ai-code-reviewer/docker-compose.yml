@@ -19,7 +19,7 @@ services:
     command: >
       sh -c "alembic upgrade head
       && (python scripts/seed_docs.py || echo 'seed_docs пропущено: перевірте GEMINI_API_KEY')
-      && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app"
 
   client:
     build: ./client

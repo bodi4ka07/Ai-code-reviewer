@@ -27,6 +27,7 @@ google-genai==1.16.0
 
 # Celery + Redis
 celery==5.4.0
+kombu==5.4.2
 redis==5.0.4
 nest-asyncio==1.6.0
 
