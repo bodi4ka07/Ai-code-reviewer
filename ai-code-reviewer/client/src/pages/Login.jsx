@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import PasswordInput from '../components/PasswordInput.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
@@ -11,15 +12,41 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [needsVerify, setNeedsVerify] = useState(false); // акаунт створено, але email ще не підтверджено
   const [busy, setBusy] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setBusy(true);
     try {
-      await (mode === 'in' ? login(email, password) : register(email, password));
-      navigate('/');
+      if (mode === 'in') {
+        await login(email, password);
+        navigate('/');
+      } else if (await register(email, password)) {
+        setNeedsVerify(true);
+        setInfo(`Ми надіслали лист на ${email}. Перейдіть за посиланням у ньому, щоб завершити реєстрацію.`);
+        setMode('in');
+        setPassword('');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.message);
+      setNeedsVerify(err.status === 403);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      const res = await api.resendVerification(email.trim());
+      setInfo(res.message);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -68,7 +95,13 @@ export default function Login() {
           </div>
         )}
 
+        {info && <div className="form-success">{info}</div>}
         {error && <div className="form-error">{error}</div>}
+        {needsVerify && (
+          <button type="button" className="btn ghost block" disabled={busy || !email} onClick={resend}>
+            Надіслати лист ще раз
+          </button>
+        )}
         <button className="btn block" disabled={busy}>
           {busy ? <span className="spinner sm" /> : 'Продовжити'}
         </button>

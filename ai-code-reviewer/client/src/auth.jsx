@@ -29,9 +29,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(
+    // Повертає true, якщо потрібно підтвердити email (вхід можливий лише після переходу за посиланням з листа)
     async (email, password) => {
-      await api.register(email, password);
+      const created = await api.register(email, password);
+      if (!created.email_verified) return true;
       await login(email, password);
+      return false;
     },
     [login],
   );
