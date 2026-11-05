@@ -77,6 +77,7 @@ async def test_prompt_is_language_aware_and_contains_lint(lint):
     assert "PEP" not in prompt
     assert "'os' imported but unused" in prompt
     assert "<code_to_review>" in prompt
+    assert "зворотні лапки" in prompt  # клієнт показує такі фрагменти моноширинним шрифтом
 
 
 async def test_prompt_for_unknown_language_is_generic(lint):
