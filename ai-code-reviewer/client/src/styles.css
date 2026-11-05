@@ -304,3 +304,4 @@ tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
 .pw .input { padding-right: 44px; }
 .pw-toggle { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
 .pw-toggle:hover { color: var(--text); background: var(--surface); }
+.inline-code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 0.88em; padding: 1px 6px; border-radius: 6px; background: var(--code-bg); border: 1px solid var(--border); color: var(--code-fg); }

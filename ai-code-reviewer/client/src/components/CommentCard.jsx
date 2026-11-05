@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { CATEGORIES, SEVERITIES } from '../utils.js';
 import { Icon } from './Icon.jsx';
 import StreamedMarkdown from './StreamedMarkdown.jsx';
+import InlineCode from './InlineCode.jsx';
 
 // questions: уже збережені питання та відповіді саме до цього коментаря
 export default function CommentCard({ comment, reviewId, questions, selected, onSelect, onAsked }) {
@@ -47,8 +48,12 @@ export default function CommentCard({ comment, reviewId, questions, selected, on
         </span>
         {comment.line_number != null && <span className="line mono">рядок {comment.line_number}</span>}
       </div>
-      <p>{comment.message}</p>
-      <div className="tip">💡 {comment.suggestion}</div>
+      <p>
+        <InlineCode>{comment.message}</InlineCode>
+      </p>
+      <div className="tip">
+        💡 <InlineCode>{comment.suggestion}</InlineCode>
+      </div>
       {comment.reference && (
         <div className="ref">
           <Icon name="book" size={14} />
