@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import PasswordInput from '../components/PasswordInput.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
+import PasswordStrength from '../components/PasswordStrength.jsx';
+import Steps from '../components/Steps.jsx';
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -34,6 +36,7 @@ export default function ResetPassword() {
   return (
     <AuthLayout>
       <form className="card" onSubmit={submit}>
+        <Steps current={message ? 3 : 2} />
         <h2>Новий пароль</h2>
         <p className="muted">Придумайте новий пароль для входу.</p>
 
@@ -56,6 +59,7 @@ export default function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <PasswordStrength password={password} />
             <label htmlFor="repeat">Повторіть пароль</label>
             <PasswordInput
               id="repeat"

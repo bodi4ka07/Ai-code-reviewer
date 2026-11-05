@@ -30,7 +30,7 @@ export default defineConfig({
     terminalQr(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'AI Code Reviewer',
         short_name: 'Code Reviewer',
@@ -38,12 +38,13 @@ export default defineConfig({
         lang: 'uk',
         start_url: '/',
         display: 'standalone',
-        background_color: '#0a0d14',
-        theme_color: '#0a0d14',
+        background_color: '#0a0a0c',
+        theme_color: '#0a0a0c',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // Окремий файл на всю площу: Android сам обрізає його під форму іконки, знак лишається в безпечній зоні
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       // Запити до API ніколи не кешуються і не підміняються index.html

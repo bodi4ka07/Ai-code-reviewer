@@ -34,7 +34,7 @@ export default function CommentCard({ comment, reviewId, questions, selected, on
 
   return (
     <div
-      className={`card comment ${comment.category}${selected ? ' sel' : ''}`}
+      className={`card comment ${comment.category} ${comment.severity}${selected ? ' sel' : ''}`}
       onClick={() => onSelect(comment.line_number)}
     >
       <div className="top">

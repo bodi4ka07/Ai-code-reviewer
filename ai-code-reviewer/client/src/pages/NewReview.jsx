@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
+import GithubBrowser from '../components/GithubBrowser.jsx';
 import { Icon } from '../components/Icon.jsx';
 import { LANGUAGES, languageLabel } from '../utils.js';
 
@@ -78,7 +79,8 @@ export default function NewReview() {
           </>
         ) : (
           <>
-            <label htmlFor="ghurl" style={{ marginTop: 0 }}>
+            <GithubBrowser selectedUrl={url.trim()} onPick={setUrl} />
+            <label htmlFor="ghurl">
               URL файлу
             </label>
             <input
@@ -92,22 +94,25 @@ export default function NewReview() {
           </>
         )}
 
-        <label htmlFor="lang">Мова коду</label>
-        <select id="lang" className="input narrow" value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="auto">
-            Авто{project ? ` (${languageLabel(project.language)} або за розширенням файлу)` : ''}
-          </option>
-          {LANGUAGES.map((l) => (
-            <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-
         {error && <div className="form-error">{error}</div>}
-        <button className="btn" disabled={busy || empty}>
-          {busy ? <span className="spinner sm" /> : <Icon name="send" />} Надіслати
-        </button>
+        <div className="submit-row">
+          <div className="lang-pick">
+            <label htmlFor="lang">Мова коду</label>
+            <select id="lang" className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
+              <option value="auto">
+                Авто{project ? ` (${languageLabel(project.language)} або за розширенням файлу)` : ''}
+              </option>
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button className="btn" disabled={busy || empty}>
+            {busy ? <span className="spinner sm" /> : <Icon name="send" />} Надіслати
+          </button>
+        </div>
       </form>
     </>
   );

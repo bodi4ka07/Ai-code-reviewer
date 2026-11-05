@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import AuthLayout from '../components/AuthLayout.jsx';
+import Steps from '../components/Steps.jsx';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -26,6 +27,7 @@ export default function ForgotPassword() {
   return (
     <AuthLayout>
       <form className="card" onSubmit={submit}>
+        <Steps current={message ? 1 : 0} />
         <h2>Забули пароль?</h2>
         <p className="muted">Вкажіть email акаунта, і ми надішлемо посилання для створення нового пароля.</p>
 

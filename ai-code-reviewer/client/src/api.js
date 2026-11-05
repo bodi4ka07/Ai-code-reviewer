@@ -72,6 +72,8 @@ export const api = {
 
   createReview: (body) => request('/reviews/', { method: 'POST', body }),
   review: (id) => request(`/reviews/${id}`),
+  providers: () => request('/auth/providers'),
+  fixReview: (id) => request(`/reviews/${id}/fix`, { method: 'POST' }),
   ask: (id, question, commentId) =>
     request(`/reviews/${id}/ask`, { method: 'POST', body: { question, comment_id: commentId || null } }),
 

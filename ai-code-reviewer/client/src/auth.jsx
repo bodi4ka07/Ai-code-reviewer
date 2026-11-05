@@ -28,6 +28,17 @@ export function AuthProvider({ children }) {
     setUser(await api.me());
   }, []);
 
+  // Вхід за готовим токеном (після повернення з GitHub)
+  const loginWithToken = useCallback(async (token) => {
+    setToken(token);
+    try {
+      setUser(await api.me());
+    } catch (e) {
+      setToken(null);
+      throw e;
+    }
+  }, []);
+
   const register = useCallback(
     // Повертає true, якщо потрібно підтвердити email (вхід можливий лише після переходу за посиланням з листа)
     async (email, password) => {
@@ -39,7 +50,10 @@ export function AuthProvider({ children }) {
     [login],
   );
 
-  const value = useMemo(() => ({ user, loading, login, register, logout }), [user, loading, login, register, logout]);
+  const value = useMemo(
+    () => ({ user, loading, login, loginWithToken, register, logout }),
+    [user, loading, login, loginWithToken, register, logout],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

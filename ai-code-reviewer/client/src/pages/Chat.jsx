@@ -213,7 +213,7 @@ export default function Chat() {
                 className="input"
                 rows={2}
                 maxLength={4000}
-                placeholder="Напишіть питання. Enter надсилає, Shift+Enter новий рядок"
+                placeholder="Напишіть питання…" title="Enter надсилає, Shift+Enter новий рядок"
                 value={text}
                 disabled={!current}
                 onChange={(e) => setText(e.target.value)}

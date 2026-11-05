@@ -10,6 +10,7 @@ import Chat from './pages/Chat.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import VerifyEmail from './pages/VerifyEmail.jsx';
+import GithubCallback from './pages/GithubCallback.jsx';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/auth/github" element={<GithubCallback />} />
       <Route
         element={
           <RequireAuth>
