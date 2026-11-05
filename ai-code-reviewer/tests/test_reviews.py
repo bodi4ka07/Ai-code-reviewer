@@ -205,3 +205,77 @@ async def test_ai_failure_saves_nothing(client, auth, project_id, session_factor
     assert resp.status_code == 503
     assert "secret" not in resp.text
     assert (await client.get(f"/reviews/{rid}", headers=auth)).json()["questions"] == []
+
+
+class FixGemini(FakeGemini):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+    async def _generate(self, model, contents, config=None):
+        self.prompts.append(contents)
+        return SimpleNamespace(text=self.text)
+
+
+async def test_fix_requires_finished_review(client, auth, project_id):
+    rid = (await client.post("/reviews/", json={"project_id": project_id, "code_snippet": CODE}, headers=auth)).json()["id"]
+    assert (await client.post(f"/reviews/{rid}/fix", headers=auth)).status_code == 400
+
+
+async def test_fix_returns_saves_and_reuses(client, auth, project_id, session_factory, monkeypatch):
+    fence = "`" * 3
+    fake = FixGemini(f"{fence}python\nimport ast\nx = ast.literal_eval(s)\n{fence}")
+    monkeypatch.setattr("google.genai.Client", lambda api_key: fake)
+    rid, _ = await _done_review(session_factory, project_id)
+
+    resp = await client.post(f"/reviews/{rid}/fix", headers=auth)
+    assert resp.status_code == 200
+    assert resp.json()["fixed_code"] == "import ast\nx = ast.literal_eval(s)"  # обгортку з трьох лапок прибрано
+    assert "literal_eval" in fake.prompts[0] and "<code>" in fake.prompts[0]
+
+    # Збережено: повторний запит не викликає AI вдруге, а деталі рев'ю містять виправлений код
+    again = await client.post(f"/reviews/{rid}/fix", headers=auth)
+    assert again.json() == resp.json()
+    assert len(fake.prompts) == 1
+    assert (await client.get(f"/reviews/{rid}", headers=auth)).json()["fixed_code"] == resp.json()["fixed_code"]
+
+
+async def test_fix_without_comments_is_rejected(client, auth, project_id, session_factory, monkeypatch):
+    monkeypatch.setattr("google.genai.Client", lambda api_key: FixGemini("x"))
+    async with session_factory() as db:
+        review = Review(project_id=uuid.UUID(project_id), code_snippet=CODE, status=ReviewStatus.DONE, overall_score=100, summary="ок")
+        db.add(review)
+        await db.commit()
+        rid = str(review.id)
+    assert (await client.post(f"/reviews/{rid}/fix", headers=auth)).status_code == 400
+
+
+async def test_fix_foreign_review_is_404(client, auth, other_auth, project_id, session_factory, monkeypatch):
+    monkeypatch.setattr("google.genai.Client", lambda api_key: FixGemini("x"))
+    rid, _ = await _done_review(session_factory, project_id)
+    assert (await client.post(f"/reviews/{rid}/fix", headers=other_auth)).status_code == 404
+
+
+async def test_fix_ai_failure_saves_nothing(client, auth, project_id, session_factory, monkeypatch):
+    class Broken:
+        class aio:
+            class models:
+                @staticmethod
+                async def generate_content(model, contents, config=None):
+                    raise RuntimeError("secret internal detail")
+
+    monkeypatch.setattr("google.genai.Client", lambda api_key: Broken())
+    rid, _ = await _done_review(session_factory, project_id)
+    resp = await client.post(f"/reviews/{rid}/fix", headers=auth)
+    assert resp.status_code == 503 and "secret" not in resp.text
+    assert (await client.get(f"/reviews/{rid}", headers=auth)).json()["fixed_code"] is None
+
+
+async def test_github_file_with_unsupported_extension_is_reviewed_as_other(client, auth, project_id, queued):
+    resp = await client.post(
+        "/reviews/",
+        json={"project_id": project_id, "github_url": "https://github.com/o/r/blob/main/src/Main.java"},
+        headers=auth,
+    )
+    assert resp.status_code == 202
+    assert resp.json()["language"] == "other"  # проєкт на Python, але .java лінтером Python не перевіряється

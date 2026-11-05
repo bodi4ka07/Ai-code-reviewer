@@ -57,6 +57,7 @@ class QuestionResponse(BaseModel):
 class ReviewDetailResponse(ReviewResponse):
     code_snippet: Optional[str]
     github_url: Optional[str]
+    fixed_code: Optional[str] = None
     comments: list[CommentResponse] = []
     questions: list[QuestionResponse] = []
 
@@ -69,3 +70,7 @@ class AskRequest(BaseModel):
 # Відповідь на питання: збережений запис, поле answer лишається сумісним зі старим форматом
 class AskResponse(QuestionResponse):
     pass
+
+
+class FixResponse(BaseModel):
+    fixed_code: str

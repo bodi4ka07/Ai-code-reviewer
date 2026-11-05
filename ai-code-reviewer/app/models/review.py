@@ -26,6 +26,7 @@ class Review(Base):
     overall_score: Mapped[int] = mapped_column(Integer, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     error_message: Mapped[str] = mapped_column(Text, nullable=True)
+    fixed_code: Mapped[str] = mapped_column(Text, nullable=True)  # виправлений AI файл (генерується на вимогу)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
