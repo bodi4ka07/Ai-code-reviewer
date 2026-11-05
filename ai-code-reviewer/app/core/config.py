@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM: Optional[str] = None
 
+    # Вхід через GitHub (OAuth App). Без цих двох значень кнопка входу не показується
+    GITHUB_CLIENT_ID: Optional[str] = None
+    GITHUB_CLIENT_SECRET: Optional[str] = None
+
     # App
     APP_ENV: str = "development"
     DEBUG: bool = True

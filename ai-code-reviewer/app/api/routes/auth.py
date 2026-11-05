@@ -1,4 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+import hmac
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,7 +16,8 @@ from app.schemas.user import (
     UserResponse,
     VerifyEmailRequest,
 )
-from app.services import email_service, email_verification_service, password_reset_service
+from app.core.config import settings
+from app.services import email_service, email_verification_service, github_oauth_service, password_reset_service
 from app.schemas.token import Token
 from app.core.security import verify_password, get_password_hash, create_access_token
 
@@ -53,7 +57,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
 
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    # Акаунт, створений через GitHub, не має пароля: входити за паролем він не може
+    if not user or not user.hashed_password or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Невірний email або пароль",
@@ -114,3 +119,68 @@ async def resend_verification(
         if link:
             background_tasks.add_task(email_service.send_verification_email, user.email, link)
     return {"message": "Якщо акаунт існує і ще не підтверджений, ми надіслали лист з посиланням."}
+
+
+STATE_COOKIE = "gh_oauth_state"
+STATE_MAX_AGE = 600
+
+
+@router.get("/providers")
+async def providers():
+    """Які способи входу доступні, щоб клієнт показував лише працюючі."""
+    return {"github": github_oauth_service.is_configured()}
+
+
+def _login_redirect(error: str) -> RedirectResponse:
+    response = RedirectResponse(f"{settings.APP_URL.rstrip('/')}/login?github_error={error}", status_code=303)
+    response.delete_cookie(STATE_COOKIE, path="/")
+    return response
+
+
+@router.get("/github/login")
+async def github_login():
+    """Початок входу через GitHub: запам'ятовуємо state у cookie й відправляємо користувача на GitHub."""
+    if not github_oauth_service.is_configured():
+        raise HTTPException(status_code=503, detail="Вхід через GitHub не налаштовано")
+    state = github_oauth_service.new_state()
+    response = RedirectResponse(github_oauth_service.authorize_url(state), status_code=303)
+    response.set_cookie(
+        STATE_COOKIE,
+        state,
+        max_age=STATE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=settings.APP_URL.startswith("https://"),
+        path="/",
+    )
+    return response
+
+
+@router.get("/github/callback")
+async def github_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Повернення з GitHub. Токен віддається клієнту у фрагменті адреси (#token=...), а не в query, щоб він не потрапляв у логи."""
+    if not github_oauth_service.is_configured():
+        return _login_redirect("not_configured")
+    if error:
+        return _login_redirect("denied")
+
+    expected = request.cookies.get(STATE_COOKIE)
+    if not code or not state or not expected or not hmac.compare_digest(state, expected):
+        return _login_redirect("state")  # захист від підробленого запиту (CSRF)
+
+    try:
+        identity = await github_oauth_service.fetch_identity(code)
+        user = await github_oauth_service.sign_in(db, identity)
+    except github_oauth_service.GithubAuthError as e:
+        return _login_redirect(e.code)
+
+    token = create_access_token(data={"sub": str(user.id)})
+    response = RedirectResponse(f"{settings.APP_URL.rstrip('/')}/auth/github#token={token}", status_code=303)
+    response.delete_cookie(STATE_COOKIE, path="/")
+    return response
