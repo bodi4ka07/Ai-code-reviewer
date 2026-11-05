@@ -11,6 +11,7 @@ export default function Login() {
   const [mode, setMode] = useState('in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [needsVerify, setNeedsVerify] = useState(false); // акаунт створено, але email ще не підтверджено
@@ -20,6 +21,10 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setInfo('');
+    if (mode === 'up' && password !== confirm) {
+      setError('Паролі не збігаються');
+      return;
+    }
     setBusy(true);
     try {
       if (mode === 'in') {
@@ -30,6 +35,7 @@ export default function Login() {
         setInfo(`Ми надіслали лист на ${email}. Перейдіть за посиланням у ньому, щоб завершити реєстрацію.`);
         setMode('in');
         setPassword('');
+        setConfirm('');
       } else {
         navigate('/');
       }
@@ -89,6 +95,19 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {mode === 'up' && (
+          <>
+            <label htmlFor="confirm">Повторіть пароль</label>
+            <PasswordInput
+              id="confirm"
+              required
+              autoComplete="new-password"
+              placeholder="Введіть пароль ще раз"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </>
+        )}
         {mode === 'in' && (
           <div className="forgot">
             <Link to="/forgot-password">Забули пароль?</Link>
