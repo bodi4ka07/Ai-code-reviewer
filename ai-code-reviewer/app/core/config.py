@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     # Відновлення пароля. Без SMTP посилання для скидання пишеться в лог сервера
     APP_URL: str = "http://localhost:5173"  # адреса клієнта, яка потрапляє в посилання з листа
     PASSWORD_RESET_MINUTES: int = 30
+    VERIFY_EMAIL_HOURS: int = 24  # скільки діє посилання підтвердження email
     SMTP_HOST: Optional[str] = None
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None

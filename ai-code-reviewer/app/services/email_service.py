@@ -25,16 +25,26 @@ def send_email(to: str, subject: str, body: str) -> None:
         smtp.send_message(message)
 
 
-def send_password_reset_email(to: str, link: str) -> None:
-    """Надсилає посилання для скидання пароля. Без налаштованого SMTP посилання пишеться в лог сервера.
+def _deliver(to: str, subject: str, body: str, link: str, what: str) -> None:
+    """Надсилає лист із посиланням. Без налаштованого SMTP посилання пишеться в лог сервера.
 
     Викликається як фонова задача: помилки не повинні впливати на відповідь API
     (інакше за відповіддю можна було б визначити, чи існує такий email).
     """
     if not smtp_configured():
-        logger.warning("SMTP не налаштовано. Посилання для скидання пароля для %s: %s", to, link)
+        logger.warning("SMTP не налаштовано. Посилання для %s для %s: %s", what, to, link)
         return
 
+    try:
+        send_email(to, subject, body)
+    except Exception:
+        logger.exception("Не вдалося надіслати лист (%s)", what)
+        if settings.DEBUG:
+            # Лише в режимі розробки: щоб можна було продовжити, поки пошта не налаштована правильно
+            logger.warning("Посилання для %s для %s: %s", what, to, link)
+
+
+def send_password_reset_email(to: str, link: str) -> None:
     body = (
         "Вітаємо!\n\n"
         "Ви (або хтось інший) запросили скидання пароля в AI Code Reviewer.\n"
@@ -42,10 +52,14 @@ def send_password_reset_email(to: str, link: str) -> None:
         f"{link}\n\n"
         "Якщо це були не ви, просто проігноруйте цей лист: пароль не зміниться."
     )
-    try:
-        send_email(to, "Скидання пароля AI Code Reviewer", body)
-    except Exception:
-        logger.exception("Не вдалося надіслати лист зі скиданням пароля")
-        if settings.DEBUG:
-            # Лише в режимі розробки: щоб можна було продовжити, поки пошта не налаштована правильно
-            logger.warning("Посилання для скидання пароля для %s: %s", to, link)
+    _deliver(to, "Скидання пароля AI Code Reviewer", body, link, "скидання пароля")
+
+
+def send_verification_email(to: str, link: str) -> None:
+    body = (
+        "Вітаємо в AI Code Reviewer!\n\n"
+        f"Щоб підтвердити email і завершити реєстрацію, перейдіть за посиланням (діє {settings.VERIFY_EMAIL_HOURS} годин):\n\n"
+        f"{link}\n\n"
+        "Якщо ви не реєструвались, просто проігноруйте цей лист."
+    )
+    _deliver(to, "Підтвердіть email в AI Code Reviewer", body, link, "підтвердження email")

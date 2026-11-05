@@ -71,5 +71,6 @@ async def reset_password(db: AsyncSession, token: str, new_password: str) -> Non
         raise HTTPException(status_code=400, detail="Посилання недійсне або прострочене")
 
     user.hashed_password = get_password_hash(new_password)
+    user.email_verified = True  # лист із посиланням дійшов до власника скриньки
     record.used_at = now
     await db.commit()
