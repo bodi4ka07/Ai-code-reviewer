@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 
-// Сюди GitHub-вхід повертає користувача: токен лежить у фрагменті адреси (#token=...), тож до сервера й логів він не потрапляє
+// Сюди вхід через GitHub або Google повертає користувача: токен лежить у фрагменті адреси (#token=...), тож до сервера й логів він не потрапляє
 export default function GithubCallback() {
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
@@ -16,18 +16,18 @@ export default function GithubCallback() {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('token');
     window.history.replaceState(null, '', window.location.pathname); // токен не лишається в адресному рядку та історії
     if (!token) {
-      setError('Не вдалося завершити вхід через GitHub. Спробуйте ще раз.');
+      setError('Не вдалося завершити вхід. Спробуйте ще раз.');
       return;
     }
     loginWithToken(token)
       .then(() => navigate('/', { replace: true }))
-      .catch(() => setError('Не вдалося завершити вхід через GitHub. Спробуйте ще раз.'));
+      .catch(() => setError('Не вдалося завершити вхід. Спробуйте ще раз.'));
   }, [loginWithToken, navigate]);
 
   return (
     <AuthLayout mode="in">
       <div className="card">
-        <h2>Вхід через GitHub</h2>
+        <h2>Вхід</h2>
         {error ? (
           <>
             <div className="form-error">{error}</div>

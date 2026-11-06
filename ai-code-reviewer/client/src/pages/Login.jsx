@@ -6,13 +6,29 @@ import PasswordInput from '../components/PasswordInput.jsx';
 import PasswordStrength from '../components/PasswordStrength.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 
-const GITHUB_ERRORS = {
-  denied: 'Вхід через GitHub скасовано.',
-  state: 'Не вдалося підтвердити запит на вхід через GitHub. Спробуйте ще раз.',
-  no_email: 'У вашому GitHub-акаунті немає підтвердженої електронної пошти. Підтвердіть її на GitHub або зареєструйтесь за email.',
-  inactive: 'Цей акаунт вимкнено.',
-};
-const GITHUB_ERROR_DEFAULT = 'Не вдалося увійти через GitHub. Спробуйте ще раз.';
+const PROVIDER_NAMES = { github: 'GitHub', google: 'Google' };
+
+// Повідомлення про помилку входу через зовнішнього провайдера за кодом із адреси повернення
+function providerError(provider, code) {
+  const name = PROVIDER_NAMES[provider];
+  const known = {
+    denied: `Вхід через ${name} скасовано.`,
+    state: `Не вдалося підтвердити запит на вхід через ${name}. Спробуйте ще раз.`,
+    no_email: `В акаунті ${name} немає підтвердженої електронної пошти. Підтвердьте її або зареєструйтесь за email.`,
+    unverified: `Електронну пошту акаунта ${name} не підтверджено. Підтвердьте її або зареєструйтесь за email.`,
+    inactive: 'Цей акаунт вимкнено.',
+  };
+  return known[code] || `Не вдалося увійти через ${name}. Спробуйте ще раз.`;
+}
+
+const GoogleMark = () => (
+  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+  </svg>
+);
 
 const GithubMark = () => (
   <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -31,20 +47,22 @@ export default function Login() {
   const [info, setInfo] = useState('');
   const [needsVerify, setNeedsVerify] = useState(false); // акаунт створено, але email ще не підтверджено
   const [busy, setBusy] = useState(false);
-  const [github, setGithub] = useState(false); // чи налаштовано вхід через GitHub на сервері
+  const [providers, setProviders] = useState({}); // які способи входу налаштовано на сервері
   const [params] = useSearchParams();
 
   useEffect(() => {
     api
       .providers()
-      .then((p) => setGithub(Boolean(p.github)))
-      .catch(() => setGithub(false));
+      .then(setProviders)
+      .catch(() => setProviders({}));
   }, []);
 
-  // Повернення з GitHub із помилкою: ?github_error=<код>
+  // Повернення від провайдера з помилкою: ?github_error=<код> або ?google_error=<код>
   useEffect(() => {
-    const code = params.get('github_error');
-    if (code) setError(GITHUB_ERRORS[code] || GITHUB_ERROR_DEFAULT);
+    for (const provider of Object.keys(PROVIDER_NAMES)) {
+      const code = params.get(`${provider}_error`);
+      if (code) setError(providerError(provider, code));
+    }
   }, [params]);
 
   const submit = async (e) => {
@@ -104,11 +122,18 @@ export default function Login() {
           </button>
         </div>
 
-        {github && (
+        {(providers.google || providers.github) && (
           <>
-            <a className="btn ghost block github-btn" href="/api/auth/github/login">
-              <GithubMark /> Продовжити з GitHub
-            </a>
+            {providers.google && (
+              <a className="btn ghost block github-btn" href="/api/auth/google/login">
+                <GoogleMark /> Продовжити з Google
+              </a>
+            )}
+            {providers.github && (
+              <a className="btn ghost block github-btn" href="/api/auth/github/login">
+                <GithubMark /> Продовжити з GitHub
+              </a>
+            )}
             <div className="or-divider">
               <span>або за email</span>
             </div>

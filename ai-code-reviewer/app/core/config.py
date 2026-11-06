@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: Optional[str] = None
     GITHUB_CLIENT_SECRET: Optional[str] = None
 
+    # Вхід через Google (OAuth client типу Web application). Без цих двох значень кнопка не показується
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
     # App
     APP_ENV: str = "development"
     DEBUG: bool = True

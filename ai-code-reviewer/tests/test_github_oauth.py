@@ -34,11 +34,11 @@ async def users(session_factory):
 
 
 async def test_providers_reflect_configuration(client, configured):
-    assert (await client.get("/auth/providers")).json() == {"github": True}
+    assert (await client.get("/auth/providers")).json()["github"] is True
 
 
 async def test_providers_when_not_configured(client):
-    assert (await client.get("/auth/providers")).json() == {"github": False}
+    assert (await client.get("/auth/providers")).json()["github"] is False
     assert (await client.get("/auth/github/login")).status_code == 503
 
 

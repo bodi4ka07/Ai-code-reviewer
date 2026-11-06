@@ -9,11 +9,12 @@ from dataclasses import dataclass
 from urllib.parse import urlencode
 
 import httpx
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.user import User
+from app.services import oauth_signin
+from app.services.oauth_signin import OAuthError
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,7 @@ EMAILS_URL = "https://api.github.com/user/emails"
 TIMEOUT = 10.0
 
 
-class GithubAuthError(Exception):
-    """Помилка входу через GitHub; code потрапляє в адресу повернення, тож це короткий безпечний токен."""
-
-    def __init__(self, code: str):
-        super().__init__(code)
-        self.code = code
+GithubAuthError = OAuthError  # ту саму помилку піднімає й спільний модуль входу
 
 
 @dataclass
@@ -103,28 +99,4 @@ async def fetch_identity(code: str) -> GithubIdentity:
 
 
 async def sign_in(db: AsyncSession, identity: GithubIdentity) -> User:
-    """Повертає користувача для цього GitHub-акаунта: наявного, зв'язаного за підтвердженою поштою, або нового."""
-    result = await db.execute(select(User).where(User.github_id == identity.github_id))
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        result = await db.execute(select(User).where(User.email == identity.email))
-        user = result.scalar_one_or_none()
-        if user is not None:
-            if not user.email_verified:
-                # Хтось міг зареєструвати цю адресу зі своїм паролем, не підтвердивши її. Власник щойно довів,
-                # що адреса його, тож пароль скидається, інакше той, хто її зайняв, лишився б з доступом.
-                user.hashed_password = None
-            user.github_id = identity.github_id
-            user.email_verified = True
-        else:
-            user = User(
-                email=identity.email, hashed_password=None, github_id=identity.github_id, email_verified=True, is_active=True
-            )
-            db.add(user)
-
-    if not user.is_active:
-        raise GithubAuthError("inactive")
-    await db.commit()
-    await db.refresh(user)
-    return user
+    return await oauth_signin.sign_in(db, "github_id", identity.github_id, identity.email)

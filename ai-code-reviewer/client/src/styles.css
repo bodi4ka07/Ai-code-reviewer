@@ -154,7 +154,8 @@ select.input { appearance: none; padding-right: 44px; background-image: linear-g
 .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--border); padding: 4px; border-radius: 999px; margin: 18px 0 4px; }
 .seg button { border: 0; background: none; min-height: 44px; border-radius: 999px; color: var(--muted); cursor: pointer; font-weight: 700; }
 .seg button.on { background: var(--text); color: var(--bg); }
-.github-btn { margin-top: 18px; gap: 10px; }
+.github-btn { margin-top: 12px; gap: 10px; }
+.github-btn:first-of-type { margin-top: 18px; }
 .or-divider { display: flex; align-items: center; gap: 14px; margin: 18px 0 0; font-size: 12px; font-weight: 600; color: var(--faint); }
 .or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 .strength { display: flex; align-items: center; gap: 10px; margin-top: 10px; }

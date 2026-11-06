@@ -33,6 +33,7 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/github" element={<GithubCallback />} />
+      <Route path="/auth/google" element={<GithubCallback />} />
       <Route
         element={
           <RequireAuth>
