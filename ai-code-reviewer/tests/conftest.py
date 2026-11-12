@@ -6,6 +6,15 @@ os.environ.update(
     SECRET_KEY="test-secret-key",
     GEMINI_API_KEY="test-gemini-key",
     DEBUG="false",
+    # Змінні середовища мають пріоритет над .env, тож тести не залежать від особистих налаштувань
+    # розробника (зокрема від пошти: тести ніколи не повинні підключатися до справжнього SMTP)
+    SMTP_HOST="",
+    SMTP_USER="",
+    SMTP_PASSWORD="",
+    SMTP_FROM="",
+    APP_URL="http://localhost:5173",
+    MAX_CODE_CHARS="20000",
+    CORS_ORIGINS="http://localhost:5173",
 )
 
 import pytest  # noqa: E402

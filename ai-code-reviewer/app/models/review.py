@@ -26,8 +26,12 @@ class Review(Base):
     overall_score: Mapped[int] = mapped_column(Integer, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     error_message: Mapped[str] = mapped_column(Text, nullable=True)
+    fixed_code: Mapped[str] = mapped_column(Text, nullable=True)  # виправлений AI файл (генерується на вимогу)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     project: Mapped["Project"] = relationship("Project", back_populates="reviews")
     comments: Mapped[list["ReviewComment"]] = relationship("ReviewComment", back_populates="review", cascade="all, delete-orphan")
+    questions: Mapped[list["ReviewQuestion"]] = relationship(
+        "ReviewQuestion", back_populates="review", cascade="all, delete-orphan", order_by="ReviewQuestion.created_at"
+    )

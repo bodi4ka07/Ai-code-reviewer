@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useState } from 'react';
+import { copyText } from '../utils.js';
 
 const KEYWORDS = {
   python: 'def return import from as try except finally pass with if elif else for while class in not and or is None True False lambda yield raise await async',
@@ -46,12 +47,15 @@ export function tokenize(line, language) {
 const SEV_COLOR = { critical: 'var(--crit)', warning: 'var(--warn)', info: 'var(--info)' };
 
 // issues: { [lineNumber]: 'critical' | 'warning' | 'info' }
-export default function CodeView({ code, language, issues, activeLine, fileLabel }) {
-  const activeRef = useRef(null);
-
-  useEffect(() => {
-    if (activeRef.current) activeRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [activeLine]);
+// afterLine(n): необов'язковий вміст (коментарі), який виводиться одразу під рядком n
+export default function CodeView({ code, language, issues, activeLine, fileLabel, afterLine }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (await copyText(code)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
+  };
 
   const lines = code.split('\n');
   return (
@@ -63,32 +67,34 @@ export default function CodeView({ code, language, issues, activeLine, fileLabel
           <i />
         </div>
         <span className="mono">{fileLabel}</span>
+        <button type="button" className="btn ghost sm copy-btn" onClick={copy}>
+          {copied ? 'Скопійовано' : 'Копіювати'}
+        </button>
       </div>
-      <pre className="code">
+      <div className="code">
         {lines.map((text, i) => {
           const n = i + 1;
           const sev = issues[n];
           const cls = `ln${sev ? ' bad' : ''}${activeLine === n ? ' active' : ''}`;
+          const extra = afterLine ? afterLine(n) : null;
           return (
-            <div
-              key={n}
-              className={cls}
-              style={sev ? { '--c': SEV_COLOR[sev] } : undefined}
-              ref={activeLine === n ? activeRef : undefined}
-            >
-              <span className="n">{n}</span>
-              <span className="t">
-                {tokenize(text, language).map((t, j) => (
-                  <span key={j} className={t.type === 'plain' ? undefined : `tk-${t.type}`}>
-                    {t.text}
-                  </span>
-                ))}
-                {text === '' && ' '}
-              </span>
-            </div>
+            <Fragment key={n}>
+              <div className={cls} style={sev ? { '--c': SEV_COLOR[sev] } : undefined}>
+                <span className="n">{n}</span>
+                <span className="t">
+                  {tokenize(text, language).map((t, j) => (
+                    <span key={j} className={t.type === 'plain' ? undefined : `tk-${t.type}`}>
+                      {t.text}
+                    </span>
+                  ))}
+                  {text === '' && ' '}
+                </span>
+              </div>
+              {extra && <div className="ln-comments">{extra}</div>}
+            </Fragment>
           );
         })}
-      </pre>
+      </div>
     </div>
   );
 }

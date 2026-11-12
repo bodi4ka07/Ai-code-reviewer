@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 from app.core.config import settings
 from app.db.base import Base
-from app.models import user, project, review, comment  # noqa: F401  (реєструє моделі в metadata)
+import app.models  # noqa: F401  (реєструє всі моделі в metadata)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

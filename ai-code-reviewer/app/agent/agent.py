@@ -144,6 +144,7 @@ class CodeReviewAgent:
 - line_number: номер рядка в наданому коді або null.
 - suggestion: конкретна порада, як виправити.
 - reference: стандарт або правило, на яке спираєшся (наприклад "OWASP A03:2021 - Injection" або "{style_guide}"), або null.
+- У message і suggestion завжди обгортай код у зворотні лапки: імена змінних, функцій і класів, ключові слова, виклики та вирази (наприклад `const`, `res.json()`, `onUnauthorized`).
 - Не вигадуй проблем, яких немає в коді."""
 
     def _parse_response(self, raw_text: str, code: str) -> AgentResult:

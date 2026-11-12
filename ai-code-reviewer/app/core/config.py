@@ -28,6 +28,24 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
     SEMGREP_BIN: str = "semgrep"
 
+    # Відновлення пароля. Без SMTP посилання для скидання пишеться в лог сервера
+    APP_URL: str = "http://localhost:5173"  # адреса клієнта, яка потрапляє в посилання з листа
+    PASSWORD_RESET_MINUTES: int = 30
+    VERIFY_EMAIL_HOURS: int = 24  # скільки діє посилання підтвердження email
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+
+    # Вхід через GitHub (OAuth App). Без цих двох значень кнопка входу не показується
+    GITHUB_CLIENT_ID: Optional[str] = None
+    GITHUB_CLIENT_SECRET: Optional[str] = None
+
+    # Вхід через Google (OAuth client типу Web application). Без цих двох значень кнопка не показується
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
     # App
     APP_ENV: str = "development"
     DEBUG: bool = True

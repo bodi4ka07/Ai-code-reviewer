@@ -8,7 +8,14 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.review import ReviewStatus
 from app.models.user import User
-from app.schemas.review import AskRequest, AskResponse, ReviewCreate, ReviewDetailResponse, ReviewResponse
+from app.schemas.review import (
+    AskRequest,
+    AskResponse,
+    FixResponse,
+    ReviewCreate,
+    ReviewDetailResponse,
+    ReviewResponse,
+)
 from app.services import project_service, review_service
 from app.tasks import process_review_task
 
@@ -55,5 +62,15 @@ async def ask_about_review(
 ):
     """Уточнююче питання до AI по рев'ю або по конкретному коментарю."""
     review = await review_service.get_owned_review(db, review_id, current_user.id)
-    answer = await review_service.answer_question(review, data.question, data.comment_id)
-    return {"answer": answer}
+    return await review_service.answer_question(db, review, data.question, data.comment_id)
+
+
+@router.post("/{review_id}/fix", response_model=FixResponse)
+async def fix_review(
+    review_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Виправлений AI варіант коду. Генерується один раз, далі повертається збережений."""
+    review = await review_service.get_owned_review(db, review_id, current_user.id)
+    return FixResponse(fixed_code=await review_service.generate_fix(db, review))

@@ -11,8 +11,12 @@ class User(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # None для акаунтів, створених через GitHub: входити за паролем вони не можуть, доки не зададуть його
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=True)
+    github_id: Mapped[str] = mapped_column(String(32), unique=True, nullable=True, index=True)
+    google_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     projects: Mapped[list["Project"]] = relationship("Project", back_populates="user", cascade="all, delete-orphan")

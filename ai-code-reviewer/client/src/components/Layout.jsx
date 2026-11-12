@@ -27,6 +27,9 @@ export default function Layout() {
         <NavLink to="/" end className="nav-item">
           <Icon name="grid" /> Проєкти
         </NavLink>
+        <NavLink to="/chat" className="nav-item">
+          <Icon name="chat" /> Чат
+        </NavLink>
         <div className="side-foot">
           <button className="theme" onClick={toggleTheme}>
             <Icon name={themeIcon} /> {theme === 'dark' ? 'Світла тема' : 'Темна тема'}
@@ -51,6 +54,10 @@ export default function Layout() {
         <NavLink to="/" end>
           <Icon name="grid" size={22} />
           Проєкти
+        </NavLink>
+        <NavLink to="/chat">
+          <Icon name="chat" size={22} />
+          Чат
         </NavLink>
         <button onClick={toggleTheme}>
           <Icon name={themeIcon} size={22} />

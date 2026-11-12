@@ -65,7 +65,11 @@ rules:
     languages: [javascript, typescript]
     severity: INFO
     message: Оголошення через var має функціональну область видимості та підйом.
-    pattern: var $X = ...
+    # Semgrep трактує var/let/const як однакові оголошення, тому шаблон сам по собі
+    # спрацьовує й на const та let. Регулярний вираз залишає лише справжні var.
+    patterns:
+      - pattern: var $X = ...
+      - pattern-regex: '^\s*var\s'
     metadata:
       category: style
       reference: "Google JavaScript Style Guide - use const or let"

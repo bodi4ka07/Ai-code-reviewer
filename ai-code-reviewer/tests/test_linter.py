@@ -89,6 +89,15 @@ async def test_semgrep_rules_detect_known_issues(language, code, rule_hint):
     assert any(e.tool == "semgrep" and rule_hint in e.message for e in result.errors), (result.errors, result.notes)
 
 
+@pytest.mark.skipif(shutil.which(linter.settings.SEMGREP_BIN) is None, reason="semgrep не встановлено (працює в Docker)")
+async def test_var_rule_flags_only_var_not_const_or_let():
+    # Шаблон Semgrep `var $X = ...` сам по собі спрацьовує й на const та let (хибні спрацювання)
+    code = 'const a = 1;\nlet b = 2;\nvar c = 3;\nconst s = "var z = 1";\n'
+    result = await run_linter(code, "javascript")
+    var_lines = [e.line for e in result.errors if "var" in e.message and e.tool == "semgrep"]
+    assert var_lines == [3], (result.errors, result.notes)
+
+
 def test_language_helpers():
     assert normalize_language("TS") == "typescript"
     assert normalize_language("other") == "other"

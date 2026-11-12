@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, projects, reviews, users
+from app.api.routes import auth, chats, projects, reviews, users
 from app.core.config import settings
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(projects.router, prefix="/projects", tags=["Projects"])
 app.include_router(reviews.router, prefix="/reviews", tags=["Reviews"])
+app.include_router(chats.router, prefix="/chats", tags=["Chats"])
 
 
 @app.get("/", tags=["Health"])
