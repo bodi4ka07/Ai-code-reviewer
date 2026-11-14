@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import { useKeyboardState } from '../keyboard.js';
 import { useTheme } from '../theme.js';
 import { Icon } from './Icon.jsx';
 
@@ -8,21 +8,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const [theme, toggleTheme] = useTheme();
   const navigate = useNavigate();
-
-  // Поки користувач вводить текст, на телефоні відкрита клавіатура підіймає нижню панель, тож її ховаємо
-  useEffect(() => {
-    const root = document.documentElement;
-    const isTextField = (el) => el instanceof HTMLElement && el.matches('input:not([type=checkbox]):not([type=radio]), textarea, select');
-    const onFocusIn = (e) => isTextField(e.target) && root.classList.add('typing');
-    const onFocusOut = () => root.classList.remove('typing');
-    document.addEventListener('focusin', onFocusIn);
-    document.addEventListener('focusout', onFocusOut);
-    return () => {
-      document.removeEventListener('focusin', onFocusIn);
-      document.removeEventListener('focusout', onFocusOut);
-      root.classList.remove('typing');
-    };
-  }, []);
+  useKeyboardState();
 
   const exit = () => {
     logout();

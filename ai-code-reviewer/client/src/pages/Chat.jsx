@@ -33,6 +33,7 @@ export default function Chat() {
   useEffect(() => {
     setCurrent(null);
     setError('');
+    setFreshId(null); // відповідь, що вже була показана, при поверненні в чат не анімується повторно
     if (!id) return undefined;
     let cancelled = false;
     api

@@ -406,7 +406,9 @@ tbody tr { cursor: pointer; } tbody tr:hover td { background: var(--surface2); }
 
 @media (max-width: 860px) {
   .chat-layout { grid-template-columns: 1fr; height: calc(100dvh - 130px); }
-  html.typing .chat-layout { height: calc(100dvh - 40px); }
+  html.typing .shell { min-height: 0; }
+  html.typing main { padding-bottom: 18px; }
+  html.typing .chat-layout { height: calc(var(--vvh, 100dvh) - 36px); }
   .chat-layout.has-chat .chat-list, .chat-layout:not(.has-chat) .chat-pane { display: none; }
   .chat-back { display: inline; }
   .chat-item .icon-btn { opacity: 1; }
