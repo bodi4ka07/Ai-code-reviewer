@@ -165,7 +165,7 @@ app/
 ├── core/           # Конфігурація, безпека (JWT), підтримувані мови
 ├── models/         # ORM-моделі
 ├── schemas/        # Pydantic-схеми
-├── services/       # Бізнес-логіка (рев'ю, виправлення коду, чат, пошта, скидання пароля, вхід через GitHub)
+├── services/       # Бізнес-логіка (рев'ю, виправлення коду, чат, пошта, скидання пароля, вхід через Google і GitHub)
 ├── agent/          # AI-агент
 │   ├── tools/      # linter, github_fetcher, rag_search
 │   └── rules/      # Правила Semgrep (python, javascript)
