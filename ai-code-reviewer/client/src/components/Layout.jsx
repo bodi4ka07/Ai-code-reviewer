@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import { useKeyboardState } from '../keyboard.js';
 import { useTheme } from '../theme.js';
 import { Icon } from './Icon.jsx';
 
@@ -7,6 +8,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const [theme, toggleTheme] = useTheme();
   const navigate = useNavigate();
+  useKeyboardState();
 
   const exit = () => {
     logout();

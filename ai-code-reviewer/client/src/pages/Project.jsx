@@ -10,6 +10,8 @@ export default function Project() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [draftName, setDraftName] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -20,6 +22,24 @@ export default function Project() {
       cancelled = true;
     };
   }, [id]);
+
+  const startRename = () => {
+    setDraftName(data.project.name);
+    setRenaming(true);
+  };
+
+  const saveRename = async (e) => {
+    e.preventDefault();
+    const name = draftName.trim();
+    setRenaming(false);
+    if (!name || name === data.project.name) return;
+    try {
+      const updated = await api.renameProject(id, name);
+      setData((d) => ({ ...d, project: { ...d.project, name: updated.name } }));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const remove = async () => {
     if (!window.confirm(`Видалити проєкт «${data.project.name}» разом з усіма рев'ю?`)) return;
@@ -59,13 +79,36 @@ export default function Project() {
           <div className="crumb">
             <Link to="/">Проєкти</Link> <Icon name="chevron" size={14} /> {project.name}
           </div>
-          <h1>{project.name}</h1>
+          {renaming ? (
+            <form className="rename-form" onSubmit={saveRename}>
+              <input
+                className="input"
+                autoFocus
+                required
+                maxLength={255}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onKeyDown={(e) => e.key === 'Escape' && setRenaming(false)}
+                aria-label="Назва проєкту"
+              />
+              <button className="btn">Зберегти</button>
+              <button type="button" className="btn ghost" onClick={() => setRenaming(false)}>
+                Скасувати
+              </button>
+            </form>
+          ) : (
+            <h1>{project.name}</h1>
+          )}
           <p className="muted">
             {languageLabel(project.language)}
             {project.description ? ` · ${project.description}` : ''}
           </p>
         </div>
         <div className="actions">
+          <button className="btn ghost" onClick={startRename}>
+            <Icon name="edit" /> Перейменувати
+          </button>
           <button className="btn ghost" onClick={remove}>
             <Icon name="trash" /> Видалити
           </button>

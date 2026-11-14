@@ -12,6 +12,11 @@ os.environ.update(
     SMTP_USER="",
     SMTP_PASSWORD="",
     SMTP_FROM="",
+    # Те саме для входу через провайдерів: справжні ключі з .env не повинні вмикати його в тестах
+    GITHUB_CLIENT_ID="",
+    GITHUB_CLIENT_SECRET="",
+    GOOGLE_CLIENT_ID="",
+    GOOGLE_CLIENT_SECRET="",
     APP_URL="http://localhost:5173",
     MAX_CODE_CHARS="20000",
     CORS_ORIGINS="http://localhost:5173",

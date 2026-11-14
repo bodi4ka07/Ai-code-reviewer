@@ -22,7 +22,7 @@ async def _process_review(review_id: str, session_factory=None):
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-    from app.agent.agent import AgentError, CodeReviewAgent
+    from app.agent.agent import STAGE_LINTING, AgentError, CodeReviewAgent
     from app.core.config import settings
     from app.models.comment import CommentCategory, CommentSeverity, ReviewComment
     from app.models.project import Project  # noqa: F401
@@ -42,7 +42,12 @@ async def _process_review(review_id: str, session_factory=None):
                 return
 
             review.status = ReviewStatus.PROCESSING
+            review.stage = STAGE_LINTING
             await db.commit()
+
+            async def set_stage(stage: str) -> None:
+                review.stage = stage
+                await db.commit()
 
             try:
                 analysis = await CodeReviewAgent().analyze(
@@ -50,8 +55,10 @@ async def _process_review(review_id: str, session_factory=None):
                     github_url=review.github_url,
                     language=review.language,
                     db=db,
+                    on_stage=set_stage,
                 )
 
+                review.stage = None
                 review.overall_score = analysis.overall_score
                 review.summary = analysis.summary
                 if not review.code_snippet:
@@ -77,12 +84,14 @@ async def _process_review(review_id: str, session_factory=None):
                 # Повідомлення цих винятків написані для користувача
                 await db.rollback()
                 review.status = ReviewStatus.FAILED
+                review.stage = None
                 review.error_message = str(e)
                 await db.commit()
             except Exception:
                 logger.exception("Помилка під час обробки рев'ю %s", review_id)
                 await db.rollback()
                 review.status = ReviewStatus.FAILED
+                review.stage = None
                 review.error_message = "Внутрішня помилка аналізу. Спробуйте ще раз."
                 await db.commit()
     finally:

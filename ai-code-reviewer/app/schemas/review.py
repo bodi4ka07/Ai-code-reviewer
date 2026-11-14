@@ -35,6 +35,7 @@ class ReviewResponse(BaseModel):
     project_id: uuid.UUID
     language: str
     status: ReviewStatus
+    stage: Optional[str] = None  # linting | searching | reporting, лише поки рев'ю обробляється
     overall_score: Optional[int]
     summary: Optional[str]
     error_message: Optional[str]

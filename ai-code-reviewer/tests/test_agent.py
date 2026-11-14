@@ -152,6 +152,30 @@ async def test_rag_context_reaches_prompt(lint, monkeypatch):
     assert "[OWASP Top 10]" in client.prompts[0]
 
 
+async def test_stages_are_reported_in_order(lint, monkeypatch):
+    async def fake_search(query, db, language, limit):
+        return []
+
+    monkeypatch.setattr(agent_module, "search_docs", fake_search)
+    stages = []
+
+    async def on_stage(name):
+        stages.append(name)
+
+    await CodeReviewAgent(FakeClient(GOOD)).analyze(CODE, None, "python", db=object(), on_stage=on_stage)
+    assert stages == ["linting", "searching", "reporting"]
+
+
+async def test_searching_stage_is_skipped_without_database(lint):
+    stages = []
+
+    async def on_stage(name):
+        stages.append(name)
+
+    await CodeReviewAgent(FakeClient(GOOD)).analyze(CODE, None, "python", on_stage=on_stage)
+    assert stages == ["linting", "reporting"]
+
+
 async def test_analyze_fetches_github_code(lint, monkeypatch):
     async def fake_fetch(url):
         return CODE

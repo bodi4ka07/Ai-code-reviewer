@@ -4,6 +4,13 @@ import { api } from '../api.js';
 import { Icon } from '../components/Icon.jsx';
 import StreamedMarkdown from '../components/StreamedMarkdown.jsx';
 
+// Напис під час очікування залежить від того, що написав користувач
+function waitingLabel(content) {
+  if (content.includes('```')) return 'Аналізую код…';
+  if (content.trimEnd().endsWith('?')) return 'Шукаю відповідь…';
+  return 'Готую відповідь…';
+}
+
 export default function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -11,6 +18,7 @@ export default function Chat() {
   const [current, setCurrent] = useState(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [waiting, setWaiting] = useState('');
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [draftTitle, setDraftTitle] = useState('');
@@ -25,6 +33,7 @@ export default function Chat() {
   useEffect(() => {
     setCurrent(null);
     setError('');
+    setFreshId(null); // відповідь, що вже була показана, при поверненні в чат не анімується повторно
     if (!id) return undefined;
     let cancelled = false;
     api
@@ -93,6 +102,7 @@ export default function Chat() {
     const onlyThisChat = (fn) => (c) => (c && c.id === chatId ? fn(c) : c); // користувач міг перейти в інший чат
 
     setSending(true);
+    setWaiting(waitingLabel(content));
     setError('');
     setText('');
     setCurrent(onlyThisChat((c) => ({ ...c, messages: [...c.messages, pending] })));
@@ -201,7 +211,7 @@ export default function Chat() {
               ))}
               {sending && (
                 <div className="msg assistant thinking">
-                  <span className="spinner sm dark" /> AI думає…
+                  <span className="spinner sm dark" /> {waiting}
                 </div>
               )}
               <div ref={bottomRef} />

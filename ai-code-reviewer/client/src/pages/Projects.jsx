@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { Icon } from '../components/Icon.jsx';
@@ -12,6 +12,9 @@ export default function Projects() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', language: 'python' });
   const [formError, setFormError] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [draftName, setDraftName] = useState('');
+  const cancelled = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +45,29 @@ export default function Projects() {
       navigate(`/projects/${project.id}`);
     } catch (err) {
       setFormError(err.message);
+    }
+  };
+
+  const startRename = (e, project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingId(project.id);
+    setDraftName(project.name);
+  };
+
+  const saveRename = async (project) => {
+    const name = draftName.trim();
+    setEditingId(null);
+    if (cancelled.current) {
+      cancelled.current = false; // Escape: чернетку не зберігаємо
+      return;
+    }
+    if (!name || name === project.name) return;
+    try {
+      const updated = await api.renameProject(project.id, name);
+      setProjects((list) => list.map((p) => (p.id === project.id ? { ...p, name: updated.name } : p)));
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -105,11 +131,32 @@ export default function Projects() {
           {(projects || []).map((p) => {
             const s = stats[p.id];
             const avg = s && s.average_score != null ? Math.round(s.average_score) : null;
+            const editing = p.id === editingId;
+            const Card = editing ? 'div' : Link; // поле вводу не можна вкладати в посилання
             return (
-              <Link key={p.id} to={`/projects/${p.id}`} className="card proj">
+              <Card key={p.id} {...(editing ? {} : { to: `/projects/${p.id}` })} className="card proj">
                 <div className="row">
-                  <div>
-                    <b className="proj-name">{p.name}</b>
+                  <div className="proj-title">
+                    {editing ? (
+                      <input
+                        className="input rename"
+                        autoFocus
+                        maxLength={255}
+                        value={draftName}
+                        onChange={(e) => setDraftName(e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        onBlur={() => saveRename(p)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.target.blur();
+                          if (e.key === 'Escape') {
+                            cancelled.current = true;
+                            e.target.blur();
+                          }
+                        }}
+                      />
+                    ) : (
+                      <b className="proj-name">{p.name}</b>
+                    )}
                     <div className="muted small">{p.description || 'Без опису'}</div>
                   </div>
                   <span className="lang">{languageLabel(p.language)}</span>
@@ -121,11 +168,16 @@ export default function Projects() {
                     </div>
                     <div className="muted small">{s ? `${s.total_reviews} рев'ю` : ' '}</div>
                   </div>
-                  <button className="icon-btn" title="Видалити проєкт" onClick={(e) => remove(e, p)}>
-                    <Icon name="trash" />
-                  </button>
+                  <div className="proj-actions">
+                    <button className="icon-btn edit" title="Перейменувати проєкт" onClick={(e) => startRename(e, p)}>
+                      <Icon name="edit" />
+                    </button>
+                    <button className="icon-btn" title="Видалити проєкт" onClick={(e) => remove(e, p)}>
+                      <Icon name="trash" />
+                    </button>
+                  </div>
                 </div>
-              </Link>
+              </Card>
             );
           })}
           {projects && projects.length === 0 && (
