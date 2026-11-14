@@ -22,7 +22,7 @@ def fake_agent(monkeypatch, outcome):
     calls = {}
 
     class FakeAgent:
-        async def analyze(self, code, github_url, language, db):
+        async def analyze(self, code, github_url, language, db, on_stage=None):
             calls.update(code=code, language=language)
             if isinstance(outcome, Exception):
                 raise outcome
@@ -54,6 +54,44 @@ async def test_successful_review_is_saved(session_factory, review_id, monkeypatc
     assert review.overall_score == 55 and review.completed_at is not None
     assert len(comments) == 1 and len(comments[0].reference) == 255
     assert calls["language"] == "python"  # мова рев'ю доходить до агента
+
+
+async def test_stage_is_saved_while_processing_and_cleared_when_done(session_factory, review_id, monkeypatch):
+    seen = {}
+
+    class FakeAgent:
+        async def analyze(self, code, github_url, language, db, on_stage=None):
+            await on_stage("searching")
+            seen["stage"], seen["status"] = await _stage_and_status(session_factory, review_id)
+            return AgentResult(overall_score=70, summary="ок", comments=[])
+
+    monkeypatch.setattr("app.agent.agent.CodeReviewAgent", FakeAgent)
+
+    await tasks._process_review(review_id, session_factory=session_factory)
+
+    assert seen == {"stage": "searching", "status": ReviewStatus.PROCESSING}
+    review, _ = await _load(session_factory, review_id)
+    assert review.status == ReviewStatus.DONE and review.stage is None
+
+
+async def test_stage_is_cleared_when_review_fails(session_factory, review_id, monkeypatch):
+    class FakeAgent:
+        async def analyze(self, code, github_url, language, db, on_stage=None):
+            await on_stage("reporting")
+            raise AgentError("Сервіс AI тимчасово недоступний.")
+
+    monkeypatch.setattr("app.agent.agent.CodeReviewAgent", FakeAgent)
+
+    await tasks._process_review(review_id, session_factory=session_factory)
+
+    review, _ = await _load(session_factory, review_id)
+    assert review.status == ReviewStatus.FAILED and review.stage is None
+
+
+async def _stage_and_status(session_factory, review_id):
+    async with session_factory() as db:
+        review = (await db.execute(select(Review).where(Review.id == uuid.UUID(review_id)))).scalar_one()
+        return review.stage, review.status
 
 
 async def test_github_code_is_stored_for_display(session_factory, client, auth, project_id, monkeypatch):

@@ -23,6 +23,7 @@ class Review(Base):
     github_url: Mapped[str] = mapped_column(String(500), nullable=True)
     language: Mapped[str] = mapped_column(String(50), default="python", nullable=False)
     status: Mapped[ReviewStatus] = mapped_column(SAEnum(ReviewStatus), default=ReviewStatus.PENDING)
+    stage: Mapped[str] = mapped_column(String(20), nullable=True)  # поточний крок агента, поки рев'ю обробляється
     overall_score: Mapped[int] = mapped_column(Integer, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=True)
     error_message: Mapped[str] = mapped_column(Text, nullable=True)

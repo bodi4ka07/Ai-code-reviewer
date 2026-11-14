@@ -9,23 +9,26 @@ import FixedCode from '../components/FixedCode.jsx';
 import InlineCode from '../components/InlineCode.jsx';
 import { CATEGORIES, formatDate, languageLabel, plural, SEVERITY_RANK } from '../utils.js';
 
-const POLL_MS = 2000;
+const POLL_MS = 1500;
 const STEPS = [
   ['Прийнято в чергу', 'Задачу поставлено на обробку'],
-  ['Статичний аналіз і пошук по документації', 'Лінтер та RAG по стандартах'],
-  ['Аналіз', 'Формування звіту'],
+  ['Статичний аналіз', 'Лінтер перевіряє код'],
+  ['Пошук по документації', 'Добираємо стандарти та правила (RAG)'],
+  ['Формування звіту', 'Складаємо зауваження й поради'],
   ["Рев'ю готове", 'Результат збережено'],
 ];
+// Крок, який зараз виконується, за полем stage з сервера
+const STAGE_STEP = { linting: 1, searching: 2, reporting: 3 };
 
-function Progress({ status }) {
-  const current = status === 'pending' ? 0 : 1; // 1 і 2 виконуються у фоні разом
+function Progress({ status, stage }) {
+  const current = status === 'pending' ? 0 : STAGE_STEP[stage] ?? 1;
   return (
     <div className="card progress">
       <h3>Статус рев'ю</h3>
       <p className="muted small">Оновлюється автоматично</p>
       <div className="stepper">
         {STEPS.map(([title, text], i) => {
-          const cls = i < current ? 'complete' : i === current || (current === 1 && i === 2) ? 'active' : '';
+          const cls = i < current ? 'complete' : i === current ? 'active' : '';
           return (
             <div key={title} className={`step ${cls}`}>
               <div className="ic">{cls === 'complete' ? <Icon name="check" size={14} /> : i + 1}</div>
@@ -158,7 +161,7 @@ export default function Review() {
         </Link>
       </div>
 
-      {active && <Progress status={review.status} />}
+      {active && <Progress status={review.status} stage={review.stage} />}
 
       {review.status === 'failed' && (
         <div className="card failed">

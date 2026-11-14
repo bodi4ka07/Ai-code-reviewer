@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Awaitable, Callable, Literal, Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 
 RETRYABLE_CODES = {429, 500, 502, 503, 504}
 MAX_ATTEMPTS = 3
+
+# Кроки агента, про які він повідомляє під час роботи (показуються користувачу як прогрес рев'ю)
+STAGE_LINTING = "linting"
+STAGE_SEARCHING = "searching"
+STAGE_REPORTING = "reporting"
+StageCallback = Callable[[str], Awaitable[None]]
 
 
 class AgentError(Exception):
@@ -62,8 +68,15 @@ class CodeReviewAgent:
             client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.client = client
 
-    async def analyze(self, code: str | None, github_url: str | None, language: str, db=None) -> AgentResult:
-        # Крок 1: отримуємо код
+    async def analyze(
+        self, code: str | None, github_url: str | None, language: str, db=None, on_stage: StageCallback | None = None
+    ) -> AgentResult:
+        async def stage(name: str) -> None:
+            if on_stage is not None:
+                await on_stage(name)
+
+        # Крок 1: отримуємо код і запускаємо статичний аналіз
+        await stage(STAGE_LINTING)
         if github_url and not code:
             code = await fetch_github_file(github_url)
         if not code:
@@ -76,6 +89,7 @@ class CodeReviewAgent:
         # Крок 3: RAG по документації
         rag_context = ""
         if db is not None:
+            await stage(STAGE_SEARCHING)
             try:
                 query = build_query(code, language, [e.message for e in lint.errors])
                 chunks = await search_docs(query, db=db, language=language, limit=4)
@@ -84,6 +98,7 @@ class CodeReviewAgent:
                 logger.warning("RAG-пошук не вдався, продовжуємо без документації", exc_info=True)
 
         # Крок 4: звіт від Gemini
+        await stage(STAGE_REPORTING)
         prompt = self._build_prompt(code, lint_report, rag_context, language)
         raw_text = await self._generate(prompt)
         return self._parse_response(raw_text, code)
