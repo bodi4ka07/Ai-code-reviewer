@@ -66,6 +66,7 @@ export const api = {
   projects: () => request('/projects/'),
   project: (id) => request(`/projects/${id}`),
   createProject: (body) => request('/projects/', { method: 'POST', body }),
+  renameProject: (id, name) => request(`/projects/${id}`, { method: 'PATCH', body: { name } }),
   deleteProject: (id) => request(`/projects/${id}`, { method: 'DELETE' }),
   projectStats: (id) => request(`/projects/${id}/stats`),
   projectReviews: (id) => request(`/projects/${id}/reviews`),
